@@ -1,14 +1,20 @@
 import React, { useState, useEffect } from 'react';
 
 export default function App() {
+  // 메인 메뉴 탭 ('itinerary': 일정 관리, 'expense': 가계부, 'checklist': 준비물)
   const [activeTab, setActiveTab] = useState('itinerary');
+  
+  // 일정 내부에서 사용하는 '날짜별 서브 탭' (Day 1, Day 2, Day 3)
+  const [activeDay, setActiveDay] = useState('Day 1');
   
   const [itineraries, setItineraries] = useState(() => {
     const saved = localStorage.getItem('sapporo_itineraries');
     return saved ? JSON.parse(saved) : [
-      { id: 1, time: '10:00', location: '신치토세 공항 도착', memo: '포켓 와이파이 수령 및 JR 패스 교환' },
-      { id: 2, time: '13:00', location: '스스키노 라멘 골목', memo: '미소라멘 점심 식사' },
-      { id: 3, time: '18:00', location: '오도리 공원', memo: '삿포로 여름 축제 비어가든 즐기기' }
+      { id: 1, day: 'Day 1', time: '10:00', location: '신치토세 공항 도착', memo: '포켓 와이파이 수령 및 JR 패스 교환' },
+      { id: 2, day: 'Day 1', time: '13:00', location: '스스키노 라멘 골목', memo: '미소라멘 점심 식사' },
+      { id: 3, day: 'Day 1', time: '18:00', location: '오도리 공원', memo: '삿포로 여름 축제 비어가든 즐기기' },
+      { id: 4, day: 'Day 2', time: '09:00', location: '오타루 이동', memo: 'JR 열차 타고 오타루운하 관광' },
+      { id: 5, day: 'Day 3', time: '11:00', location: '삿포로 맥주 박물관', memo: '맥주 시음 및 역사 투어' }
     ];
   });
 
@@ -29,14 +35,17 @@ export default function App() {
     ];
   });
 
+  // 일정 입력 폼 상태
   const [newLocation, setNewLocation] = useState('');
   const [newTime, setNewTime] = useState('12:00');
   const [newMemo, setNewMemo] = useState('');
 
+  // 가계부 입력 폼 상태
   const [expCategory, setExpCategory] = useState('식비');
   const [expAmount, setExpAmount] = useState('');
   const [expMemo, setExpMemo] = useState('');
 
+  // 체크리스트 입력 폼 상태
   const [newTodo, setNewTodo] = useState('');
 
   useEffect(() => {
@@ -54,7 +63,14 @@ export default function App() {
   const addItinerary = (e) => {
     e.preventDefault();
     if (!newLocation.trim()) return;
-    setItineraries([...itineraries, { id: Date.now(), time: newTime, location: newLocation, memo: newMemo }].sort((a, b) => a.time.localeCompare(b.time)));
+    const newItem = { 
+      id: Date.now(), 
+      day: activeDay, // 현재 선택된 날짜 탭에 자동으로 저장됩니다.
+      time: newTime, 
+      location: newLocation, 
+      memo: newMemo 
+    };
+    setItineraries([...itineraries, newItem].sort((a, b) => a.time.localeCompare(b.time)));
     setNewLocation('');
     setNewMemo('');
   };
@@ -97,6 +113,9 @@ export default function App() {
     window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`, '_blank');
   };
 
+  // 현재 선택된 날짜(Day)의 일정만 걸러내는 필터링
+  const filteredItineraries = itineraries.filter(item => item.day === activeDay);
+
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#020617', color: '#f8fafc', paddingBottom: '100px', fontFamily: 'sans-serif' }}>
       {/* 상단 헤더 */}
@@ -108,11 +127,36 @@ export default function App() {
       {/* 메인 콘텐츠 영역 */}
       <div style={{ maxWidth: '448px', margin: '0 auto', padding: '16px' }}>
         
-        {/* 일정 관리 탭 */}
+        {/* 1. 일정 관리 탭 */}
         {activeTab === 'itinerary' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            
+            {/* 🌟 중요: 날짜 선택 서브 탭 (Day 1, Day 2, Day 3) */}
+            <div style={{ display: 'flex', gap: '8px', backgroundColor: '#0f172a', padding: '6px', borderRadius: '12px', border: '1px solid #1e293b' }}>
+              {['Day 1', 'Day 2', 'Day 3'].map((day) => (
+                <button
+                  key={day}
+                  onClick={() => setActiveDay(day)}
+                  style={{
+                    flex: 1,
+                    padding: '10px',
+                    border: 'none',
+                    borderRadius: '8px',
+                    backgroundColor: activeDay === day ? '#f97316' : 'transparent',
+                    color: activeDay === day ? '#020617' : '#94a3b8',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  {day}
+                </button>
+              ))}
+            </div>
+
+            {/* 일정 추가 폼 */}
             <form onSubmit={addItinerary} style={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '16px', padding: '20px' }}>
-              <h3 style={{ margin: '0 0 16px 0', fontSize: '14px', color: '#fb923c' }}>➕ 새로운 일정 추가</h3>
+              <h3 style={{ margin: '0 0 16px 0', fontSize: '14px', color: '#fb923c' }}>➕ {activeDay}에 새로운 일정 추가</h3>
               <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
                 <input type="time" value={newTime} onChange={(e) => setNewTime(e.target.value)} style={{ width: '80px', backgroundColor: '#020617', border: '1px solid #1e293b', borderRadius: '8px', padding: '8px', color: '#fff' }} />
                 <input type="text" placeholder="장소 또는 일정명" value={newLocation} onChange={(e) => setNewLocation(e.target.value)} style={{ flex: 1, backgroundColor: '#020617', border: '1px solid #1e293b', borderRadius: '8px', padding: '8px', color: '#fff' }} />
@@ -121,24 +165,30 @@ export default function App() {
               <button type="submit" style={{ width: '100%', backgroundColor: '#f97316', border: 'none', borderRadius: '8px', padding: '12px', color: '#020617', fontWeight: 'bold', cursor: 'pointer' }}>일정 추가하기</button>
             </form>
 
+            {/* 타임라인 일정 목록 */}
             <div style={{ borderLeft: '2px solid #1e293b', marginLeft: '12px', paddingLeft: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {itineraries.map((item) => (
-                <div key={item.id} style={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '16px', padding: '16px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
-                    <span style={{ fontSize: '12px', color: '#fb923c', backgroundColor: 'rgba(249,115,22,0.1)', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold' }}>⏰ {item.time}</span>
-                    <h4 style={{ margin: 0, flex: 1, fontSize: '16px' }}>{item.location}</h4>
-                    <div>
-                      <button onClick={() => handleMapSearch(item.location)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px', padding: '4px' }}>📍</button>
-                      <button onClick={() => deleteItinerary(item.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px', padding: '4px' }}>🗑️</button>
+              {filteredItineraries.length === 0 ? (
+                <p style={{ color: '#64748b', fontSize: '14px', margin: '16px 0' }}>등록된 일정이 없습니다. 일정을 추가해 보세요!</p>
+              ) : (
+                filteredItineraries.map((item) => (
+                  <div key={item.id} style={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '16px', padding: '16px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '12px', color: '#fb923c', backgroundColor: 'rgba(249,115,22,0.1)', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold' }}>⏰ {item.time}</span>
+                      <h4 style={{ margin: 0, flex: 1, fontSize: '16px' }}>{item.location}</h4>
+                      <div>
+                        <button onClick={() => handleMapSearch(item.location)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px', padding: '4px' }}>📍</button>
+                        <button onClick={() => deleteItinerary(item.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px', padding: '4px' }}>🗑️</button>
+                      </div>
                     </div>
+                    {item.memo && <p style={{ margin: '8px 0 0 0', fontSize: '14px', color: '#94a3b8' }}>{item.memo}</p>}
                   </div>
-                  {item.memo && <p style={{ margin: '8px 0 0 0', fontSize: '14px', color: '#94a3b8' }}>{item.memo}</p>}
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         )}
 
+        {/* 2. 가계부 탭 */}
         {activeTab === 'expense' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             <div style={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '16px', padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -182,6 +232,7 @@ export default function App() {
           </div>
         )}
 
+        {/* 3. 준비물 탭 */}
         {activeTab === 'checklist' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             <form onSubmit={addChecklist} style={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '16px', padding: '20px', display: 'flex', gap: '8px' }}>
@@ -205,7 +256,7 @@ export default function App() {
 
       </div>
 
-      {/* 하단 탭바 고정 */}
+      {/* 하단 고정 메뉴바 */}
       <div style={{ position: 'fixed', bottom: '16px', left: '16px', right: '16px', maxWidth: '448px', margin: '0 auto', backgroundColor: 'rgba(15,23,42,0.9)', backdropFilter: 'blur(8px)', border: '1px solid #1e293b', borderRadius: '16px', padding: '8px', display: 'flex', justifyContent: 'space-around', zIndex: 100 }}>
         <button onClick={() => setActiveTab('itinerary')} style={{ background: 'none', border: 'none', color: activeTab === 'itinerary' ? '#fb923c' : '#94a3b8', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', fontWeight: activeTab === 'itinerary' ? 'bold' : 'normal' }}>
           <span style={{ fontSize: '20px' }}>🧭</span>
