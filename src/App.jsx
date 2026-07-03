@@ -183,7 +183,7 @@ function App() {
   const totalExpense = expenses.reduce((sum, item) => sum + item.amount, 0);
   const totalExpenseKRW = Math.round((totalExpense * exchangeRate) / 100);
 
-  // 구글 지도 새창 검색용 안전 로직
+  // 구글 지도 새창 검색용 안전 백틱 문법 수정 적용
   const handleMapSearch = (locationName) => {
     if (!locationName) return;
     const searchUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(locationName)}`;
@@ -376,83 +376,4 @@ function App() {
                   <option value="쇼핑">쇼핑</option>
                   <option value="기타">기타</option>
                 </select>
-                <input type="number" placeholder="금액 (¥)" value={expAmount} onChange={(e) => setExpAmount(e.target.value)} style={{ flex: 1, backgroundColor: '#020617', border: '1px solid #1e293b', borderRadius: '8px', padding: '8px', color: '#fff' }} />
-              </div>
-              <input type="text" placeholder="항목 정보 기입" value={expMemo} onChange={(e) => setExpMemo(e.target.value)} style={{ width: '100%', backgroundColor: '#020617', border: '1px solid #1e293b', borderRadius: '8px', padding: '8px', color: '#fff', boxSizing: 'border-box', marginBottom: '10px' }} />
-              <button type="submit" style={{ width: '100%', backgroundColor: '#fbbf24', border: 'none', borderRadius: '8px', padding: '10px', color: '#020617', fontWeight: 'bold', cursor: 'pointer' }}>등록하기</button>
-            </form>
-
-            {/* 소비 내역 목록 */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {expenses.map((item) => {
-                const itemKRW = Math.round((item.amount * exchangeRate) / 100);
-                return (
-                  <div key={item.id} style={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px', padding: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <span style={{ fontSize: '11px', color: '#fbbf24', backgroundColor: 'rgba(251,191,36,0.1)', padding: '3px 6px', borderRadius: '4px', fontWeight: 'bold' }}>{item.category}</span>
-                      <div>
-                        <span style={{ fontSize: '14px', fontWeight: 'bold', display: 'block' }}>{item.memo || item.category}</span>
-                        <span style={{ fontSize: '11px', color: '#64748b' }}>≈ {itemKRW.toLocaleString()}원</span>
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span style={{ fontWeight: 'bold', fontSize: '14px' }}>{item.amount.toLocaleString()} ¥</span>
-                      <button type="button" onClick={() => deleteExpense(item.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}>🗑️</button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-          </div>
-        )}
-
-        {/* ==================== 4. 체크리스트 준비물 탭 ==================== */}
-        {activeTab === 'checklist' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <form onSubmit={addChecklist} style={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '16px', padding: '16px', display: 'flex', gap: '8px' }}>
-              <input type="text" placeholder="예: 우산 혹은 우비 챙기기" value={newTodo} onChange={(e) => setNewTodo(e.target.value)} style={{ flex: 1, backgroundColor: '#020617', border: '1px solid #1e293b', borderRadius: '8px', padding: '8px', color: '#fff' }} />
-              <button type="submit" style={{ backgroundColor: '#10b981', border: 'none', borderRadius: '8px', padding: '8px 16px', color: '#020617', fontWeight: 'bold', cursor: 'pointer' }}>추가</button>
-            </form>
-
-            <div style={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '16px', padding: '6px' }}>
-              {checklists.map((item) => (
-                <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', borderBottom: '1px solid #1e293b' }}>
-                  <div onClick={() => toggleChecklist(item.id)} style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', flex: 1 }}>
-                    <span style={{ fontSize: '16px' }}>{item.completed ? '✅' : '⬜'}</span>
-                    <span style={{ textDecoration: item.completed ? 'line-through' : 'none', color: item.completed ? '#64748b' : '#f8fafc', fontSize: '14px' }}>{item.task}</span>
-                  </div>
-                  <button type="button" onClick={() => deleteChecklist(item.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}>🗑️</button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-      </div>
-
-      {/* 하단 네비게이션 글로벌 고정 바 */}
-      <div style={{ position: 'fixed', bottom: '16px', left: '16px', right: '16px', maxWidth: '448px', margin: '0 auto', backgroundColor: 'rgba(15,23,42,0.95)', backdropFilter: 'blur(8px)', border: '1px solid #1e293b', borderRadius: '16px', padding: '8px 0', display: 'flex', justifyContent: 'space-around', zIndex: 100 }}>
-        <button type="button" onClick={() => setActiveTab('dashboard')} style={{ background: 'none', border: 'none', color: activeTab === 'dashboard' ? '#ea580c' : '#94a3b8', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-          <span style={{ fontSize: '18px' }}>🏠</span>
-          <span style={{ fontSize: '10px', fontWeight: activeTab === 'dashboard' ? 'bold' : 'normal' }}>대시보드</span>
-        </button>
-        <button type="button" onClick={() => setActiveTab('itinerary')} style={{ background: 'none', border: 'none', color: activeTab === 'itinerary' ? '#fb923c' : '#94a3b8', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-          <span style={{ fontSize: '18px' }}>🧭</span>
-          <span style={{ fontSize: '10px', fontWeight: activeTab === 'itinerary' ? 'bold' : 'normal' }}>일정 관리</span>
-        </button>
-        <button type="button" onClick={() => setActiveTab('expense')} style={{ background: 'none', border: 'none', color: activeTab === 'expense' ? '#fbbf24' : '#94a3b8', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-          <span style={{ fontSize: '18px' }}>💳</span>
-          <span style={{ fontSize: '10px', fontWeight: activeTab === 'expense' ? 'bold' : 'normal' }}>가계부</span>
-        </button>
-        <button type="button" onClick={() => setActiveTab('checklist')} style={{ background: 'none', border: 'none', color: activeTab === 'checklist' ? '#34d399' : '#94a3b8', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-          <span style={{ fontSize: '18px' }}>✅</span>
-          <span style={{ fontSize: '10px', fontWeight: activeTab === 'checklist' ? 'bold' : 'normal' }}>준비물</span>
-        </button>
-      </div>
-
-    </div>
-  );
-}
-
-export default App;
+                <input type="number" placeholder="금액 (¥)" value={expAmount} onChange={(e) => setExpAmount(e.target.value)} style={{ flex: 1, backgroundColor: '#020617', border: '1px solid #1e293b', borderRadius: '8px', padding
