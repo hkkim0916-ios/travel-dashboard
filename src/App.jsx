@@ -4,61 +4,71 @@ export default function App() {
   // 메인 메뉴 탭 ('dashboard': 종합 대시보드, 'itinerary': 일정 관리, 'expense': 가계부, 'checklist': 준비물)
   const [activeTab, setActiveTab] = useState('dashboard');
   
-  // 일정 내부에서 사용하는 '날짜별 서브 탭' (Day 1, Day 2, Day 3)
+  // 🌟 Day 1부터 Day 5까지 확장된 날짜별 서브 탭 상태 변수
   const [activeDay, setActiveDay] = useState('Day 1');
   
   // 실시간 환율 상태 (조회시점 환율 자동 반영용, 기본값 900원 설정)
   const [exchangeRate, setExchangeRate] = useState(900);
   const [rateLoading, setRateLoading] = useState(true);
 
-  // 이코카(ICOCA) 카드 충전 및 잔액 상태 관리
+  // 이코카(ICOCA) 카드 충전 및 잔액 상태 관리 (초기 금액 2,000엔 기본 세팅)
   const [icocaBalance, setIcocaBalance] = useState(() => {
     const saved = localStorage.getItem('sapporo_icoca');
     return saved ? parseInt(saved, 10) : 2000;
   });
   const [icocaInput, setIcocaInput] = useState('');
 
-  // 복원된 추천 일정 및 전체 교통편 초기 데이터
+  // 🌟 보내주신 'SAPPORO TRAVEL MASTER SCHEDULE' 데이터 완벽 반영!
   const [itineraries, setItineraries] = useState(() => {
     const saved = localStorage.getItem('sapporo_itineraries');
     return saved ? JSON.parse(saved) : [
-      { id: 1, day: 'Day 1', time: '10:00', location: '신치토세 공항 도착', memo: '🛄 포켓 와이파이 수령 및 JR 패스 / 이코카(ICOCA) 교통카드 충전 확인' },
-      { id: 2, day: 'Day 1', time: '11:00', location: '신치토세 공항역 ➡ 삿포로역 (JR 쾌속 에어포트)', memo: '🚇 [교통] 약 37분 소요 (지정석 추천)' },
-      { id: 3, day: 'Day 1', time: '13:00', location: '스스키노 라멘 골목 (원조 라멘요코초)', memo: '🍜 [식사] 삿포로 명물 미소라멘으로 점심 식사' },
-      { id: 4, day: 'Day 1', time: '15:00', location: '숙소 체크인 (스스키노 인근)', memo: '🏨 짐 풀고 가벼운 복장으로 정비하기' },
-      { id: 5, day: 'Day 1', time: '18:00', location: '오도리 공원 (삿포로 여름 축제)', memo: '🍺 [축제] 비어가든에서 시원한 삿포로 생맥주와 축제 즐기기!' },
+      // Day 1
+      { id: 1, day: 'Day 1', time: '15:45', location: '공항 ➡ 삿포로역 이동', memo: '🚌 [교통] 공항 리무진 버스 탑승 (이코카/스이카 가능, 1,300엔)' },
+      { id: 2, day: 'Day 1', time: '17:00', location: '호텔 체크인 (호텔 포르자 삿포로역)', memo: '🏨 숙소 짐 풀고 가벼운 복장으로 정비하기' },
+      { id: 3, day: 'Day 1', time: '18:00', location: '오도리 공원 맥주축제 전야제', memo: '🍺 [축제] 삿포로 클래식 부스 조지기!' },
+      { id: 4, day: 'Day 1', time: '19:30', location: '스스키노 저녁 식사', memo: '🥩 [식사] 삿포로 여행 필수 코스인 징기스칸 양고기 맛보기' },
 
-      { id: 6, day: 'Day 2', time: '09:00', location: '삿포로역 ➡ 오타루역 (JR 하코다테 본선)', memo: '🚇 [교통] 열차 진행 방향 기준 우측 창가 자리가 바다 뷰 명당!' },
-      { id: 7, day: 'Day 2', time: '10:30', location: '오타루 운하 & 사카이마치도리 공방거리', memo: '📸 오르골당, 유리공예 투어 및 디저트(르타오) 맛보기' },
-      { id: 8, day: 'Day 2', time: '13:00', location: '오타루 스시 거리 (스시야도리)', memo: '🍣 [식사] 만화 미스터 초밥왕의 배경지에서 신선한 스시 점심' },
-      { id: 9, day: 'Day 2', time: '18:30', location: '미나미오타루역 ➡ 삿포로역 복귀', memo: '🚇 [교통] 복귀 열차 안에서 휴식' },
-      { id: 10, day: 'Day 2', time: '20:00', location: '스스키노 다루마 (징기스칸)', memo: '🥩 [식사] 삿포로 여행 필수 코스 양고기 구이에 나마비루 한 잔' },
+      // Day 2
+      { id: 5, day: 'Day 2', time: '07:40', location: '삿포로역 집결지 이동', memo: '🍱 든든하게 아침 식사 챙겨 먹고 출발하기' },
+      { id: 6, day: 'Day 2', time: '08:00', location: '비에이·후라노 버스 투어 출발', memo: '🚌 [투어] 대자연 정복하기 (~19:00 종료, 추가 교통비 0원)' },
+      { id: 7, day: 'Day 2', time: '19:30', location: '삿포로역 복귀 후 저녁 식사', memo: '🍛 [식사] 얼어붙은 몸을 녹여줄 따끈한 스프카레' },
 
-      { id: 11, day: 'Day 3', time: '10:00', location: '삿포로 TV 타워 & 시계탑', memo: '🗼 시내 중심가 랜드마크 배경으로 기념사진 촬영' },
-      { id: 12, day: 'Day 3', time: '11:30', location: '삿포로 맥주 박물관', memo: '🍺 [교통] 삿포로역 사포로에키마에 버스정류장에서 [Loop 88] 버스 탑승 (이코카 사용 가능)' },
-      { id: 13, day: 'Day 3', time: '12:00', location: '맥주 박물관 투어 및 시음', memo: '🍻 오리지널 삿포로 맥주 3종 샘플러 시음 필수 (유료)' },
-      { id: 14, day: 'Day 3', time: '15:00', location: '다누키코지 상점가 쇼핑', memo: '🛍️ 돈키호테 및 드럭스토어 기념품, 의류 쇼핑' },
-      { id: 15, day: 'Day 3', time: '18:00', location: '삿포로역 ➡ 신치토세 공항 복귀', memo: '🚇 [교통] 비행기 출발 2시간 반 전에는 공항 도착하도록 출발' }
+      // Day 3
+      { id: 8, day: 'Day 3', time: '11:00', location: '삿포로역 ➡ 미나미오타루역', memo: '🚇 [교통] JR 쾌속 에어포트 탑승 (사전 지정석)' },
+      { id: 9, day: 'Day 3', time: '12:00', location: '오르골마을 투어 및 점심', memo: '📸 오르골당 관광, 르타오 디저트 폭발, 스시 맛집 점심 식사' },
+      { id: 10, day: 'Day 3', time: '15:00', location: '오타루 운하 평지 산책', memo: '🌅 낮 풍경부터 노을빛, 그리고 환상적인 일몰 야경까지 감상하기' },
+      { id: 11, day: 'Day 3', time: '19:00', location: '오타루역 ➡ 삿포로역 복귀', memo: '🚇 [교통] JR 쾌속 에어포트 탑승 (사전 지정석)' },
+
+      // Day 4
+      { id: 12, day: 'Day 4', time: '12:00', location: '오도리 공원 맥주축제 낮맥', memo: '🍺 [메인] 낮맥 감성 폭발! 점심 식사 겸 맥주 즐기기 (이코카 결제 가능)' },
+      { id: 13, day: 'Day 4', time: '14:30', location: '실내 쇼핑 및 숙소 휴식', memo: '🛍️ 삿포로역 스텔라플레이스 구경 후 체력 안배용 낮잠/휴식' },
+      { id: 14, day: 'Day 4', time: '18:00', location: '시내 ➡ 로프웨이역 이동', memo: '🚊 [교통] 감성 가득 노면전차 트램 탑승 (이코카 가능, 200엔)' },
+      { id: 15, day: 'Day 4', time: '19:00', location: '모이와야마 전망대 야경', memo: '✨ [야경] 저녁 7시 정각 일몰 타이밍 저격하여 역대급 야경 감상 (~20:30)' },
+
+      // Day 5
+      { id: 16, day: 'Day 5', time: '09:30', location: '호텔 체크아웃 & 막판 쇼핑', memo: '🛒 역 근처 드러그스토어 및 돈키호테 마지막 기념품 쇼핑' },
+      { id: 17, day: 'Day 5', time: '11:30', location: '삿포로역 ➡ 신치토세 공항역', memo: '🚇 [교통] JR 쾌속 에어포트 탑승 (사전 지정석)' },
+      { id: 18, day: 'Day 5', time: '12:15', location: '공항 국내선 청사 투어 & 점심', memo: '🍜 [식사] 라멘 도조 골목에서 마지막 라멘 한 그릇 비우고 귀국길!' }
     ];
   });
 
   const [expenses, setExpenses] = useState(() => {
     const saved = localStorage.getItem('sapporo_expenses');
     return saved ? JSON.parse(saved) : [
-      { id: 1, category: '식비', amount: 1500, memo: '점심 미소라멘' },
-      { id: 2, category: '교통비', amount: 1150, memo: 'JR 공항 쾌속선 열차' },
-      { id: 3, category: '식비', amount: 3500, memo: '오도리 비어가든 맥주/안주' },
-      { id: 4, category: '교통비', amount: 750, memo: '삿포로-오타루 JR 편도' }
+      { id: 1, category: '교통비', amount: 1300, memo: '공항 리무진 버스' },
+      { id: 2, category: '식비', amount: 3500, memo: '오도리 맥주축제 전야제 맥주/안주' },
+      { id: 3, category: '식비', amount: 4000, memo: '스스키노 징기스칸 저녁' },
+      { id: 4, category: '교통비', amount: 200, memo: '모이와야마 트램 편도' }
     ];
   });
 
   const [checklists, setChecklists] = useState(() => {
     const saved = localStorage.getItem('sapporo_checklists');
     return saved ? JSON.parse(saved) : [
-      { id: 1, task: '여권 및 비자 확인', completed: true },
-      { id: 2, task: '엔화 환전 및 이코카 실물 카드 확인', completed: true },
-      { id: 3, task: '돼지코(110V 어댑터) 챙기기', completed: false },
-      { id: 4, task: '일본 비짓재팬웹(Visit Japan Web) 등록', completed: false }
+      { id: 1, task: '여권 소지 및 비짓재팬웹 QR 코드 확인', completed: true },
+      { id: 2, task: '이코카(ICOCA) 실물 교통카드 지갑 챙기기', completed: true },
+      { id: 3, task: '돼지코(110V 어댑터) 가방 확인', completed: false },
+      { id: 4, task: '비에이 투어 집결 위치 사전 파악', completed: false }
     ];
   });
 
@@ -159,7 +169,7 @@ export default function App() {
     setChecklists(checklists.filter(item => item.id !== id));
   };
 
-  // 금액 계산 연산
+  // 계산 공식
   const totalExpense = expenses.reduce((sum, item) => sum + item.amount, 0);
   const totalExpenseKRW = Math.round((totalExpense * exchangeRate) / 100);
 
@@ -179,18 +189,18 @@ export default function App() {
         <h1 style={{ fontSize: '28px', fontWeight: '900', margin: 0, color: '#ffffff' }}>삿포로 여름 축제 대시보드</h1>
       </div>
 
-      {/* 메인 콘텐츠 영역 */}
+      {/* 메인 뷰포트 영역 */}
       <div style={{ maxWidth: '448px', margin: '0 auto', padding: '16px' }}>
         
-        {/* ==================== [NEW] 1. 종합 대시보드 화면 탭 ==================== */}
+        {/* ==================== 1. 종합 대시보드 화면 탭 ==================== */}
         {activeTab === 'dashboard' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             
-            {/* 상단 웰컴 카드 & 환율 요약 */}
+            {/* 상단 환율 헤드 */}
             <div style={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '16px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <h3 style={{ margin: '0 0 4px 0', fontSize: '18px', fontWeight: 'bold', color: '#fb923c' }}>🎉 즐거운 여행 준비!</h3>
-                <p style={{ margin: 0, fontSize: '13px', color: '#94a3b8' }}>한눈에 여행 현황을 확인하세요.</p>
+                <h3 style={{ margin: '0 0 4px 0', fontSize: '18px', fontWeight: 'bold', color: '#fb923c' }}>🎉 마스터 일정 장착 완료!</h3>
+                <p style={{ margin: 0, fontSize: '13px', color: '#94a3b8' }}>삿포로 여름 축제를 스마트하게 즐겨봐요.</p>
               </div>
               <div style={{ textAlign: 'right' }}>
                 <span style={{ fontSize: '11px', color: '#38bdf8', display: 'block', fontWeight: 'bold' }}>실시간 환율</span>
@@ -198,24 +208,24 @@ export default function App() {
               </div>
             </div>
 
-            {/* 자산 현황 요약 (총 가계부 지출 + 이코카 잔액) */}
+            {/* 자산 관리 섹션 */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
               <div onClick={() => setActiveTab('expense')} style={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '16px', padding: '14px', cursor: 'pointer' }}>
-                <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 'bold' }}>💰 가계부 총 지출</span>
+                <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 'bold' }}>💰 현재 가계부 지출</span>
                 <h4 style={{ margin: '6px 0 2px 0', fontSize: '18px', fontWeight: 'bold', color: '#fbbf24' }}>{totalExpense.toLocaleString()} ¥</h4>
                 <span style={{ fontSize: '11px', color: '#64748b' }}>≈ {totalExpenseKRW.toLocaleString()}원</span>
               </div>
               <div onClick={() => setActiveTab('expense')} style={{ backgroundColor: '#0b1329', border: '1px solid #1d4ed8', borderRadius: '16px', padding: '14px', cursor: 'pointer' }}>
-                <span style={{ fontSize: '12px', color: '#60a5fa', fontWeight: 'bold' }}>💳 이코카 카드 잔액</span>
+                <span style={{ fontSize: '12px', color: '#60a5fa', fontWeight: 'bold' }}>💳 이코카 실시간 잔액</span>
                 <h4 style={{ margin: '6px 0 2px 0', fontSize: '18px', fontWeight: 'bold', color: '#eff6ff' }}>{icocaBalance.toLocaleString()} ¥</h4>
-                <span style={{ fontSize: '11px', color: '#3b82f6' }}>교통비 자동차감 활성</span>
+                <span style={{ fontSize: '11px', color: '#3b82f6' }}>교통비 기입시 동시 차감</span>
               </div>
             </div>
 
-            {/* 준비물 요약 현황 프로그레스 바 */}
+            {/* 체크리스트 진행 표시바 */}
             <div onClick={() => setActiveTab('checklist')} style={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '16px', padding: '16px', cursor: 'pointer' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#34d399' }}>✅ 체크리스트 달성률</span>
+                <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#34d399' }}>✅ 체크리스트 달성도</span>
                 <span style={{ fontSize: '13px', fontWeight: 'bold' }}>{completedCheckCount} / {checklists.length}</span>
               </div>
               <div style={{ width: '100%', height: '8px', backgroundColor: '#020617', borderRadius: '4px', overflow: 'hidden' }}>
@@ -223,38 +233,42 @@ export default function App() {
               </div>
             </div>
 
-            {/* 오늘의 대표 추천 스케줄 타임라인 요약 */}
+            {/* 🌟 새 일정 위주로 최적화된 마스터 타임라인 요약 뷰 */}
             <div style={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '16px', padding: '16px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-                <h4 style={{ margin: 0, fontSize: '15px', fontWeight: 'bold', color: '#f8fafc' }}>🧭 주요 전체 일정 미리보기</h4>
-                <button onClick={() => setActiveTab('itinerary')} style={{ background: 'none', border: 'none', color: '#fb923c', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>전체 편집하기 ➡</button>
+                <h4 style={{ margin: 0, fontSize: '15px', fontWeight: 'bold', color: '#f8fafc' }}>🧭 마스터 일정 주요 라우트 미리보기</h4>
+                <button onClick={() => setActiveTab('itinerary')} style={{ background: 'none', border: 'none', color: '#fb923c', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>전체 보기 ➡</button>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {itineraries.filter((_, idx) => [0, 2, 5, 7, 10, 12].includes(idx)).map((item) => (
-                  <div key={item.id} style={{ display: 'flex', gap: '12px', borderLeft: '2px solid #334155', paddingLeft: '12px', marginLeft: '6px' }}>
-                    <span style={{ fontSize: '11px', color: '#fb923c', fontWeight: 'bold', minWidth: '40px' }}>{item.day} {item.time}</span>
-                    <span style={{ fontSize: '13px', color: '#e2e8f0', fontWeight: '500' }}>{item.location}</span>
-                  </div>
-                ))}
+                {[0, 2, 5, 8, 12, 14, 17].map((idx) => {
+                  const item = itineraries[idx];
+                  if (!item) return null;
+                  return (
+                    <div key={item.id} style={{ display: 'flex', gap: '12px', borderLeft: '2px solid #334155', paddingLeft: '12px', marginLeft: '6px' }}>
+                      <span style={{ fontSize: '11px', color: '#fb923c', fontWeight: 'bold', minWidth: '70px' }}>{item.day} ({item.time})</span>
+                      <span style={{ fontSize: '13px', color: '#e2e8f0', fontWeight: '500' }}>{item.location}</span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
           </div>
         )}
 
-        {/* ==================== 2. 일정 관리 탭 (여행 일자 요약 기능 탑재!) ==================== */}
+        {/* ==================== 2. 일정 관리 탭 (Day 1 ~ Day 5 완벽 대응) ==================== */}
         {activeTab === 'itinerary' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             
-            {/* 날짜 선택 서브 탭 (여행 일자 클릭 버튼부) */}
-            <div style={{ display: 'flex', gap: '8px', backgroundColor: '#0f172a', padding: '6px', borderRadius: '12px', border: '1px solid #1e293b' }}>
-              {['Day 1', 'Day 2', 'Day 3'].map((day) => (
+            {/* 🌟 Day 5까지 완벽하게 확장된 스케줄 서브 가로 스크롤 탭 바 */}
+            <div style={{ display: 'flex', gap: '6px', backgroundColor: '#0f172a', padding: '6px', borderRadius: '12px', border: '1px solid #1e293b', overflowX: 'auto' }}>
+              {['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5'].map((day) => (
                 <button
                   key={day}
                   onClick={() => setActiveDay(day)}
                   style={{
-                    flex: 1,
-                    padding: '12px 10px',
+                    flex: '1 0 auto',
+                    padding: '10px 14px',
                     border: 'none',
                     borderRadius: '8px',
                     backgroundColor: activeDay === day ? '#f97316' : 'transparent',
@@ -269,39 +283,40 @@ export default function App() {
               ))}
             </div>
 
-            {/* 🌟 100% 반영: 클릭한 날짜의 전체 스케줄 요약 브리핑 카드 */}
+            {/* 선택한 날짜 스케줄 한눈에 요약 브리핑 카드 */}
             <div style={{ backgroundColor: 'rgba(249, 115, 22, 0.06)', border: '1px dashed #f97316', borderRadius: '16px', padding: '16px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
                 <span style={{ fontSize: '16px' }}>📝</span>
-                <h4 style={{ margin: 0, fontSize: '14px', color: '#fb923c', fontWeight: 'bold' }}>{activeDay} 스케줄 한눈에 요약 정리</h4>
+                <h4 style={{ margin: 0, fontSize: '14px', color: '#fb923c', fontWeight: 'bold' }}>{activeDay} 스케줄 타임라인 요약 브리핑</h4>
               </div>
               {filteredItineraries.length === 0 ? (
-                <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>등록된 일정이 없습니다. 일정을 아래에서 추가해 보세요!</p>
+                <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>해당 날짜에 등록된 일정이 없습니다.</p>
               ) : (
-                <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '13px', color: '#cbd5e1', lineHeight: '1.7' }}>
+                <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '13px', color: '#cbd5e1', lineHeight: '1.8' }}>
                   {filteredItineraries.map((item) => (
                     <li key={item.id}>
                       <strong>[{item.time}]</strong> {item.location} 
                       {item.memo && item.memo.includes('[교통]') && <span style={{ color: '#60a5fa', marginLeft: '4px' }}>(이동 🚇)</span>}
-                      {item.memo && item.memo.includes('[식사]') && <span style={{ color: '#f59e0b', marginLeft: '4px' }}>(맛집 🍛)</span>}
+                      {item.memo && item.memo.includes('[식사]') && <span style={{ color: '#f59e0b', marginLeft: '4px' }}>(식사 🍛)</span>}
+                      {item.memo && item.memo.includes('[축제]') && <span style={{ color: '#ef4444', marginLeft: '4px' }}>(축제 🔥)</span>}
                     </li>
                   ))}
                 </ul>
               )}
             </div>
 
-            {/* 일정 추가 폼 */}
+            {/* 일정 직접 추가 폼 */}
             <form onSubmit={addItinerary} style={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '16px', padding: '20px' }}>
-              <h3 style={{ margin: '0 0 16px 0', fontSize: '14px', color: '#fb923c' }}>➕ {activeDay}에 새로운 일정 추가</h3>
+              <h3 style={{ margin: '0 0 16px 0', fontSize: '14px', color: '#fb923c' }}>➕ {activeDay}에 추가 커스텀 스케줄 등록</h3>
               <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
                 <input type="time" value={newTime} onChange={(e) => setNewTime(e.target.value)} style={{ width: '80px', backgroundColor: '#020617', border: '1px solid #1e293b', borderRadius: '8px', padding: '8px', color: '#fff' }} />
-                <input type="text" placeholder="장소 또는 일정명" value={newLocation} onChange={(e) => setNewLocation(e.target.value)} style={{ flex: 1, backgroundColor: '#020617', border: '1px solid #1e293b', borderRadius: '8px', padding: '8px', color: '#fff' }} />
+                <input type="text" placeholder="장소 혹은 일정 타이틀" value={newLocation} onChange={(e) => setNewLocation(e.target.value)} style={{ flex: 1, backgroundColor: '#020617', border: '1px solid #1e293b', borderRadius: '8px', padding: '8px', color: '#fff' }} />
               </div>
-              <input type="text" placeholder="메모 (예: [교통] 지하철이동 / [식사] 점심)" value={newMemo} onChange={(e) => setNewMemo(e.target.value)} style={{ width: '100%', backgroundColor: '#020617', border: '1px solid #1e293b', borderRadius: '8px', padding: '8px', color: '#fff', boxSizing: 'border-box', marginBottom: '12px' }} />
-              <button type="submit" style={{ width: '100%', backgroundColor: '#f97316', border: 'none', borderRadius: '8px', padding: '12px', color: '#020617', fontWeight: 'bold', cursor: 'pointer' }}>일정 추가하기</button>
+              <input type="text" placeholder="메모 기입 (예: [교통] 리무진 버스 탑승 등)" value={newMemo} onChange={(e) => setNewMemo(e.target.value)} style={{ width: '100%', backgroundColor: '#020617', border: '1px solid #1e293b', borderRadius: '8px', padding: '8px', color: '#fff', boxSizing: 'border-box', marginBottom: '12px' }} />
+              <button type="submit" style={{ width: '100%', backgroundColor: '#f97316', border: 'none', borderRadius: '8px', padding: '12px', color: '#020617', fontWeight: 'bold', cursor: 'pointer' }}>일정 세부 추가</button>
             </form>
 
-            {/* 타임라인 일정 목록 */}
+            {/* 타임라인 메인 상세 목록 */}
             <div style={{ borderLeft: '2px solid #1e293b', marginLeft: '12px', paddingLeft: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {filteredItineraries.map((item) => (
                 <div key={item.id} style={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '16px', padding: '16px' }}>
@@ -426,7 +441,7 @@ export default function App() {
 
       </div>
 
-      {/* 하단 고정 메뉴바 (종합 대시보드 탭 추가!) */}
+      {/* 하단 내비게이션 바 */}
       <div style={{ position: 'fixed', bottom: '16px', left: '16px', right: '16px', maxWidth: '448px', margin: '0 auto', backgroundColor: 'rgba(15,23,42,0.9)', backdropFilter: 'blur(8px)', border: '1px solid #1e293b', borderRadius: '16px', padding: '8px', display: 'flex', justifyContent: 'space-around', zIndex: 100 }}>
         <button onClick={() => setActiveTab('dashboard')} style={{ background: 'none', border: 'none', color: activeTab === 'dashboard' ? '#f43f5e' : '#94a3b8', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', fontWeight: activeTab === 'dashboard' ? 'bold' : 'normal' }}>
           <span style={{ fontSize: '20px' }}>🏠</span>
