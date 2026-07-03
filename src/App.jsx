@@ -138,4 +138,69 @@ function App() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div style={{ display: 'flex', gap: '4px', backgroundColor: '#0f172a', padding: '4px', borderRadius: '12px', overflowX: 'auto', border: '1px solid #1e293b' }}>
               {['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5'].map(day => (
-                <button key={day} onClick={() => setActiveDay(day)} style={{ flex: 1, padding: '10px', border: 'none', borderRadius: '8px', backgroundColor: activeDay === day ? '#f97316' : 'transparent', color: activeDay === day ? '#020617' : '#94a3b8', fontWeight: '
+                <button key={day} onClick={() => setActiveDay(day)} style={{ flex: 1, padding: '10px', border: 'none', borderRadius: '8px', backgroundColor: activeDay === day ? '#f97316' : 'transparent', color: activeDay === day ? '#020617' : '#94a3b8', fontWeight: 'bold', cursor: 'pointer' }}>{day}</button>
+              ))}
+            </div>
+            <form onSubmit={addItinerary} style={{ backgroundColor: '#0f172a', borderRadius: '16px', padding: '16px', border: '1px solid #1e293b' }}>
+              <input type="time" value={newTime} onChange={(e) => setNewTime(e.target.value)} style={{ width: '100%', marginBottom: '6px', backgroundColor: '#020617', border: '1px solid #1e293b', padding: '8px', color: '#fff', borderRadius: '6px' }} />
+              <input type="text" placeholder="장소" value={newLocation} onChange={(e) => setNewLocation(e.target.value)} style={{ width: '100%', marginBottom: '6px', backgroundColor: '#020617', border: '1px solid #1e293b', padding: '8px', color: '#fff', borderRadius: '6px' }} />
+              <button type="submit" style={{ width: '100%', backgroundColor: '#f97316', border: 'none', borderRadius: '6px', padding: '10px', fontWeight: 'bold', cursor: 'pointer' }}>등록</button>
+            </form>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {filteredItineraries.map(item => (
+                <div key={item.id} style={{ backgroundColor: '#0f172a', padding: '12px', borderRadius: '12px', display: 'flex', justifyContent: 'space-between' }}>
+                  <span>{item.time} - {item.location}</span>
+                  <button onClick={() => deleteItinerary(item.id)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>🗑️</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'expense' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ backgroundColor: '#0f172a', padding: '16px', borderRadius: '16px' }}>
+              <h2>{totalExpense.toLocaleString()} JPY</h2>
+            </div>
+            <form onSubmit={addExpense} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <input type="number" placeholder="금액" value={expAmount} onChange={(e) => setExpAmount(e.target.value)} style={{ padding: '8px', borderRadius: '6px' }} />
+              <button type="submit" style={{ padding: '10px', borderRadius: '6px', backgroundColor: '#fbbf24' }}>지출 등록</button>
+            </form>
+            {expenses.map(item => (
+              <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', background: '#0f172a', borderRadius: '8px' }}>
+                <span>{item.memo}</span>
+                <span>{item.amount} ¥</span>
+                <button onClick={() => deleteExpense(item.id)}>🗑️</button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {activeTab === 'checklist' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <form onSubmit={addChecklist} style={{ display: 'flex', gap: '6px' }}>
+              <input value={newTodo} onChange={(e) => setNewTodo(e.target.value)} style={{ flex: 1, padding: '8px', borderRadius: '8px' }} />
+              <button type="submit">추가</button>
+            </form>
+            {checklists.map(item => (
+              <div key={item.id} onClick={() => toggleChecklist(item.id)} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', background: '#0f172a', borderRadius: '12px' }}>
+                <span>{item.completed ? '✅' : '⬜'} {item.task}</span>
+                <button onClick={() => deleteChecklist(item.id)}>🗑️</button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* 하단 고정 탭 바 */}
+      <div style={{ position: 'fixed', bottom: '16px', left: '16px', right: '16px', maxWidth: '448px', margin: '0 auto', backgroundColor: 'rgba(15,23,42,0.95)', border: '1px solid #1e293b', borderRadius: '16px', padding: '8px 0', display: 'flex', justifyContent: 'space-around', zIndex: 100 }}>
+        <button type="button" onClick={() => setActiveTab('dashboard')} style={{ background: 'none', border: 'none', color: activeTab === 'dashboard' ? '#ea580c' : '#94a3b8', cursor: 'pointer' }}>🏠<br/><span style={{ fontSize: '10px' }}>대시보드</span></button>
+        <button type="button" onClick={() => setActiveTab('itinerary')} style={{ background: 'none', border: 'none', color: activeTab === 'itinerary' ? '#fb923c' : '#94a3b8', cursor: 'pointer' }}>🧭<br/><span style={{ fontSize: '10px' }}>일정 관리</span></button>
+        <button type="button" onClick={() => setActiveTab('expense')} style={{ background: 'none', border: 'none', color: activeTab === 'expense' ? '#fbbf24' : '#94a3b8', cursor: 'pointer' }}>💳<br/><span style={{ fontSize: '10px' }}>가계부</span></button>
+        <button type="button" onClick={() => setActiveTab('checklist')} style={{ background: 'none', border: 'none', color: activeTab === 'checklist' ? '#34d399' : '#94a3b8', cursor: 'pointer' }}>✅<br/><span style={{ fontSize: '10px' }}>준비물</span></button>
+      </div>
+    </div>
+  );
+}
+
+export default App;
