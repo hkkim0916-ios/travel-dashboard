@@ -1,18 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Calendar, 
-  MapPin, 
-  DollarSign, 
-  CheckCircle2, 
-  Clock, 
-  TrendingUp, 
-  Plus, 
-  Trash2, 
-  ChevronRight, 
-  Compass, 
-  CheckSquare, 
-  Wallet 
-} from 'lucide-react';
 
 export default function App() {
   // --- 상태 관리 (초기값 로컬스토리지 연동) ---
@@ -39,7 +25,7 @@ export default function App() {
     const saved = localStorage.getItem('sapporo_checklists');
     return saved ? JSON.parse(saved) : [
       { id: 1, task: '여권 및 비자 확인', completed: true },
-      { id: 2, task: '돼지코(지돼지코 어댑터) 챙기기', completed: false },
+      { id: 2, task: '돼지코(어댑터) 챙기기', completed: false },
       { id: 3, task: '비어가든 사전 예약 확인', completed: false }
     ];
   });
@@ -110,7 +96,7 @@ export default function App() {
 
   const totalExpense = expenses.reduce((sum, item) => sum + item.amount, 0);
 
-  // --- 구글맵 이동 함수 (오타 수정 및 고도화) ---
+  // --- 구글맵 이동 함수 ---
   const handleMapSearch = (location) => {
     if (!location) return;
     const encodedLocation = encodeURIComponent(location);
@@ -133,11 +119,11 @@ export default function App() {
         
         {/* 탭 이동 제어 영역 */}
         {activeTab === 'itinerary' && (
-          <div className="space-y-6 animate-fadeIn">
+          <div className="space-y-6">
             {/* 일정 추가 폼 */}
             <form onSubmit={addItinerary} className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xs">
               <h3 className="text-sm font-bold text-orange-400 flex items-center gap-2">
-                <Plus className="w-4 h-4" /> 새로운 일정 추가
+                ➕ 새로운 일정 추가
               </h3>
               <div className="grid grid-cols-3 gap-2">
                 <input 
@@ -170,13 +156,12 @@ export default function App() {
             <div className="relative pl-6 border-l border-slate-800 ml-3 space-y-6">
               {itineraries.map((item) => (
                 <div key={item.id} className="relative group">
-                  {/* Tailwind v4 정렬 수치 수정: -left-5.25 */}
-                  <div className="absolute -left-5.25 top-1.5 w-3.5 h-3.5 bg-orange-500 rounded-full ring-4 ring-slate-950 group-hover:scale-110 transition-transform" />
+                  <div className="absolute -left-[25px] top-1.5 w-3.5 h-3.5 bg-orange-500 rounded-full ring-4 ring-slate-950 group-hover:scale-110 transition-transform" />
                   <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xs hover:border-slate-700 transition-colors">
                     <div className="flex justify-between items-start gap-2 mb-1">
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-bold text-orange-400 bg-orange-500/10 px-2 py-0.5 rounded-sm flex items-center gap-1">
-                          <Clock className="w-3 h-3" /> {item.time}
+                          ⏰ {item.time}
                         </span>
                         <h4 className="text-base font-bold text-slate-100">{item.location}</h4>
                       </div>
@@ -186,13 +171,13 @@ export default function App() {
                           className="p-1.5 text-slate-500 hover:text-cyan-400 transition-colors"
                           title="구글맵에서 검색"
                         >
-                          <MapPin className="w-4 h-4" />
+                          📍
                         </button>
                         <button 
                           onClick={() => deleteItinerary(item.id)}
                           className="p-1.5 text-slate-500 hover:text-rose-400 transition-colors"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          🗑️
                         </button>
                       </div>
                     </div>
@@ -205,7 +190,7 @@ export default function App() {
         )}
 
         {activeTab === 'expense' && (
-          <div className="space-y-6 animate-fadeIn">
+          <div className="space-y-6">
             {/* 가계부 상단 요약 카드 */}
             <div className="bg-linear-to-br from-slate-900 to-slate-950 border border-slate-800 rounded-2xl p-5 flex justify-between items-center shadow-xs">
               <div>
@@ -214,15 +199,15 @@ export default function App() {
                   {totalExpense.toLocaleString()} <span className="text-lg font-bold text-amber-400">JPY</span>
                 </p>
               </div>
-              <div className="bg-amber-500/10 p-3 rounded-xl border border-amber-500/20">
-                <TrendingUp className="w-6 h-6 text-amber-400" />
+              <div className="bg-amber-500/10 p-3 rounded-xl border border-amber-500/20 text-xl">
+                💰
               </div>
             </div>
 
             {/* 가계부 지출 입력 폼 */}
             <form onSubmit={addExpense} className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
               <h3 className="text-sm font-bold text-amber-400 flex items-center gap-2">
-                <Plus className="w-4 h-4" /> 지출 내역 기록
+                ➕ 지출 내역 기록
               </h3>
               <div className="grid grid-cols-3 gap-2">
                 <select 
@@ -271,92 +256,4 @@ export default function App() {
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-extrabold text-slate-200">{item.amount.toLocaleString()} ¥</span>
                     <button 
-                      onClick={() => deleteExpense(item.id)}
-                      className="p-1 text-slate-600 hover:text-rose-400 transition-colors opacity-0 group-hover:opacity-100"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'checklist' && (
-          <div className="space-y-6 animate-fadeIn">
-            {/* 체크리스트 등록 폼 */}
-            <form onSubmit={addChecklist} className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3">
-              <h3 className="text-sm font-bold text-emerald-400 flex items-center gap-2">
-                <Plus className="w-4 h-4" /> 준비물 / 할 일 추가
-              </h3>
-              <div className="flex gap-2">
-                <input 
-                  type="text" 
-                  placeholder="예: 돼지코 멀티탭 챙기기" 
-                  value={newTodo} 
-                  onChange={(e) => setNewTodo(e.target.value)}
-                  className="flex-1 bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-sm focus:outline-hidden focus:border-emerald-500 text-white"
-                />
-                <button type="submit" className="bg-emerald-500 text-slate-950 font-bold text-sm px-4 rounded-xl hover:bg-emerald-400 transition-colors active:scale-95">
-                  등록
-                </button>
-              </div>
-            </form>
-
-            {/* 체크리스트 목록 */}
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-2 divide-y divide-slate-800/60">
-              {checklists.map((item) => (
-                <div key={item.id} className="flex justify-between items-center p-3 group">
-                  <button 
-                    onClick={() => toggleChecklist(item.id)}
-                    className="flex items-center gap-3 text-left flex-1"
-                  >
-                    <CheckCircle2 className={`w-5 h-5 flex-shrink-0 transition-colors ${item.completed ? 'text-emerald-500 fill-emerald-500/10' : 'text-slate-600'}`} />
-                    <span className={`text-sm font-medium transition-all ${item.completed ? 'line-through text-slate-500' : 'text-slate-200'}`}>
-                      {item.task}
-                    </span>
-                  </button>
-                  <button 
-                    onClick={() => deleteChecklist(item.id)}
-                    className="p-1 text-slate-600 hover:text-rose-400 transition-colors opacity-0 group-hover:opacity-100"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-      </div>
-
-      {/* 모바일 최적화 하단 고정 스퀘어클 탭바 */}
-      <div className="fixed bottom-4 left-4 right-4 max-w-md mx-auto bg-slate-900/80 backdrop-blur-md border border-slate-800/80 rounded-2xl p-2 flex justify-around items-center shadow-2xl z-50">
-        <button 
-          onClick={() => setActiveTab('itinerary')}
-          className={`flex flex-col items-center gap-1 py-2 px-4 rounded-xl transition-all ${activeTab === 'itinerary' ? 'text-orange-400 bg-orange-500/10 font-bold' : 'text-slate-400 hover:text-slate-200'}`}
-        >
-          <Compass className="w-5 h-5" />
-          <span className="text-[10px] tracking-tight">일정 관리</span>
-        </button>
-
-        <button 
-          onClick={() => setActiveTab('expense')}
-          className={`flex flex-col items-center gap-1 py-2 px-4 rounded-xl transition-all ${activeTab === 'expense' ? 'text-amber-400 bg-amber-500/10 font-bold' : 'text-slate-400 hover:text-slate-200'}`}
-        >
-          <Wallet className="w-5 h-5" />
-          <span className="text-[10px] tracking-tight">가계부</span>
-        </button>
-
-        <button 
-          onClick={() => setActiveTab('checklist')}
-          className={`flex flex-col items-center gap-1 py-2 px-4 rounded-xl transition-all ${activeTab === 'checklist' ? 'text-emerald-400 bg-emerald-500/10 font-bold' : 'text-slate-400 hover:text-slate-200'}`}
-        >
-          <CheckSquare className="w-5 h-5" />
-          <span className="text-[10px] tracking-tight">준비물</span>
-        </button>
-      </div>
-    </div>
-  );
-}
+                      onClick={() =>
