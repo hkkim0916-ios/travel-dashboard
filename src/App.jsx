@@ -1,20 +1,20 @@
 import React, { useState, useEffect } from 'react';
 
 export default function App() {
-  // 메인 메뉴 탭 ('itinerary': 일정 관리, 'expense': 가계부, 'checklist': 준비물)
-  const [activeTab, setActiveTab] = useState('itinerary');
+  // 메인 메뉴 탭 ('dashboard': 종합 대시보드, 'itinerary': 일정 관리, 'expense': 가계부, 'checklist': 준비물)
+  const [activeTab, setActiveTab] = useState('dashboard');
   
   // 일정 내부에서 사용하는 '날짜별 서브 탭' (Day 1, Day 2, Day 3)
   const [activeDay, setActiveDay] = useState('Day 1');
   
-  // 🌟 실시간 환율 상태 (조회시점 환율 자동 반영용, 기본값 900원 설정)
+  // 실시간 환율 상태 (조회시점 환율 자동 반영용, 기본값 900원 설정)
   const [exchangeRate, setExchangeRate] = useState(900);
   const [rateLoading, setRateLoading] = useState(true);
 
-  // 🌟 이코카(ICOCA) 카드 충전 및 잔액 상태 관리
+  // 이코카(ICOCA) 카드 충전 및 잔액 상태 관리
   const [icocaBalance, setIcocaBalance] = useState(() => {
     const saved = localStorage.getItem('sapporo_icoca');
-    return saved ? parseInt(saved, 10) : 2000; // 초기 충전금액 기본값 2,000엔
+    return saved ? parseInt(saved, 10) : 2000;
   });
   const [icocaInput, setIcocaInput] = useState('');
 
@@ -73,20 +73,19 @@ export default function App() {
 
   const [newTodo, setNewTodo] = useState('');
 
-  // 🌟 실시간 환율 API 호출 (무료 오픈 API 활용하여 조회시점 환율 파싱)
+  // 실시간 환율 API 호출
   useEffect(() => {
     fetch('https://open.er-api.com/v6/latest/JPY')
       .then((res) => res.json())
       .then((data) => {
         if (data && data.rates && data.rates.KRW) {
-          // 1엔당 원화 가격이 나오므로 100을 곱해 100엔당 원화 환율 계산
           const rate100Yen = data.rates.KRW * 100;
           setExchangeRate(parseFloat(rate100Yen.toFixed(2)));
         }
         setRateLoading(false);
       })
       .catch((err) => {
-        console.error('환율 로드 실패, 기본값 우회:', err);
+        console.error('환율 로드 실패:', err);
         setRateLoading(false);
       });
   }, []);
@@ -122,19 +121,14 @@ export default function App() {
     setItineraries(itineraries.filter(item => item.id !== id));
   };
 
-  // 🌟 지출 추가할 때 교통비 항목이면 이코카 잔액에서 자동 차감 옵션 포함
   const addExpense = (e) => {
     e.preventDefault();
     if (!expAmount || isNaN(expAmount)) return;
     const amountNum = parseInt(expAmount, 10);
-    
     setExpenses([...expenses, { id: Date.now(), category: expCategory, amount: amountNum, memo: expMemo }]);
-    
-    // 교통비 입력 시 이코카 카드 잔액에서 차감 연동
     if (expCategory === '교통비') {
       setIcocaBalance(prev => Math.max(0, prev - amountNum));
     }
-    
     setExpAmount('');
     setExpMemo('');
   };
@@ -143,7 +137,6 @@ export default function App() {
     setExpenses(expenses.filter(item => item.id !== id));
   };
 
-  // 🌟 이코카 카드 직접 충전 기능
   const handleChargeIcoca = (e) => {
     e.preventDefault();
     if (!icocaInput || isNaN(icocaInput)) return;
@@ -166,7 +159,7 @@ export default function App() {
     setChecklists(checklists.filter(item => item.id !== id));
   };
 
-  // 금액 계산
+  // 금액 계산 연산
   const totalExpense = expenses.reduce((sum, item) => sum + item.amount, 0);
   const totalExpenseKRW = Math.round((totalExpense * exchangeRate) / 100);
 
@@ -176,9 +169,10 @@ export default function App() {
   };
 
   const filteredItineraries = itineraries.filter(item => item.day === activeDay);
+  const completedCheckCount = checklists.filter(c => c.completed).length;
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#020617', color: '#f8fafc', paddingBottom: '100px', fontFamily: 'sans-serif' }}>
+    <div style={{ minHeight: '100vh', backgroundColor: '#020617', color: '#f8fafc', paddingBottom: '110px', fontFamily: 'sans-serif' }}>
       {/* 상단 헤더 */}
       <div style={{ background: 'linear-gradient(to right, #ea580c, #f59e0b)', padding: '24px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}>
         <p style={{ color: '#ffedd5', fontSize: '12px', fontWeight: 'bold', margin: '0 0 4px 0' }}>SAPPORO SUMMER FESTIVAL '26</p>
@@ -188,11 +182,71 @@ export default function App() {
       {/* 메인 콘텐츠 영역 */}
       <div style={{ maxWidth: '448px', margin: '0 auto', padding: '16px' }}>
         
-        {/* 1. 일정 관리 탭 */}
+        {/* ==================== [NEW] 1. 종합 대시보드 화면 탭 ==================== */}
+        {activeTab === 'dashboard' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            
+            {/* 상단 웰컴 카드 & 환율 요약 */}
+            <div style={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '16px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h3 style={{ margin: '0 0 4px 0', fontSize: '18px', fontWeight: 'bold', color: '#fb923c' }}>🎉 즐거운 여행 준비!</h3>
+                <p style={{ margin: 0, fontSize: '13px', color: '#94a3b8' }}>한눈에 여행 현황을 확인하세요.</p>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <span style={{ fontSize: '11px', color: '#38bdf8', display: 'block', fontWeight: 'bold' }}>실시간 환율</span>
+                <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#f1f5f9' }}>{rateLoading ? '🔄 로딩중' : `¥100 = ${exchangeRate}원`}</span>
+              </div>
+            </div>
+
+            {/* 자산 현황 요약 (총 가계부 지출 + 이코카 잔액) */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div onClick={() => setActiveTab('expense')} style={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '16px', padding: '14px', cursor: 'pointer' }}>
+                <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 'bold' }}>💰 가계부 총 지출</span>
+                <h4 style={{ margin: '6px 0 2px 0', fontSize: '18px', fontWeight: 'bold', color: '#fbbf24' }}>{totalExpense.toLocaleString()} ¥</h4>
+                <span style={{ fontSize: '11px', color: '#64748b' }}>≈ {totalExpenseKRW.toLocaleString()}원</span>
+              </div>
+              <div onClick={() => setActiveTab('expense')} style={{ backgroundColor: '#0b1329', border: '1px solid #1d4ed8', borderRadius: '16px', padding: '14px', cursor: 'pointer' }}>
+                <span style={{ fontSize: '12px', color: '#60a5fa', fontWeight: 'bold' }}>💳 이코카 카드 잔액</span>
+                <h4 style={{ margin: '6px 0 2px 0', fontSize: '18px', fontWeight: 'bold', color: '#eff6ff' }}>{icocaBalance.toLocaleString()} ¥</h4>
+                <span style={{ fontSize: '11px', color: '#3b82f6' }}>교통비 자동차감 활성</span>
+              </div>
+            </div>
+
+            {/* 준비물 요약 현황 프로그레스 바 */}
+            <div onClick={() => setActiveTab('checklist')} style={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '16px', padding: '16px', cursor: 'pointer' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#34d399' }}>✅ 체크리스트 달성률</span>
+                <span style={{ fontSize: '13px', fontWeight: 'bold' }}>{completedCheckCount} / {checklists.length}</span>
+              </div>
+              <div style={{ width: '100%', height: '8px', backgroundColor: '#020617', borderRadius: '4px', overflow: 'hidden' }}>
+                <div style={{ width: `${checklists.length ? (completedCheckCount / checklists.length) * 100 : 0}%`, height: '100%', backgroundColor: '#10b981', transition: 'width 0.3s' }}></div>
+              </div>
+            </div>
+
+            {/* 오늘의 대표 추천 스케줄 타임라인 요약 */}
+            <div style={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '16px', padding: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                <h4 style={{ margin: 0, fontSize: '15px', fontWeight: 'bold', color: '#f8fafc' }}>🧭 주요 전체 일정 미리보기</h4>
+                <button onClick={() => setActiveTab('itinerary')} style={{ background: 'none', border: 'none', color: '#fb923c', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>전체 편집하기 ➡</button>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {itineraries.filter((_, idx) => [0, 2, 5, 7, 10, 12].includes(idx)).map((item) => (
+                  <div key={item.id} style={{ display: 'flex', gap: '12px', borderLeft: '2px solid #334155', paddingLeft: '12px', marginLeft: '6px' }}>
+                    <span style={{ fontSize: '11px', color: '#fb923c', fontWeight: 'bold', minWidth: '40px' }}>{item.day} {item.time}</span>
+                    <span style={{ fontSize: '13px', color: '#e2e8f0', fontWeight: '500' }}>{item.location}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+          </div>
+        )}
+
+        {/* ==================== 2. 일정 관리 탭 (여행 일자 요약 기능 탑재!) ==================== */}
         {activeTab === 'itinerary' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             
-            {/* 날짜 선택 서브 탭 */}
+            {/* 날짜 선택 서브 탭 (여행 일자 클릭 버튼부) */}
             <div style={{ display: 'flex', gap: '8px', backgroundColor: '#0f172a', padding: '6px', borderRadius: '12px', border: '1px solid #1e293b' }}>
               {['Day 1', 'Day 2', 'Day 3'].map((day) => (
                 <button
@@ -200,18 +254,40 @@ export default function App() {
                   onClick={() => setActiveDay(day)}
                   style={{
                     flex: 1,
-                    padding: '10px',
+                    padding: '12px 10px',
                     border: 'none',
                     borderRadius: '8px',
                     backgroundColor: activeDay === day ? '#f97316' : 'transparent',
                     color: activeDay === day ? '#020617' : '#94a3b8',
                     fontWeight: 'bold',
-                    cursor: 'pointer'
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
                   }}
                 >
                   {day}
                 </button>
               ))}
+            </div>
+
+            {/* 🌟 100% 반영: 클릭한 날짜의 전체 스케줄 요약 브리핑 카드 */}
+            <div style={{ backgroundColor: 'rgba(249, 115, 22, 0.06)', border: '1px dashed #f97316', borderRadius: '16px', padding: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+                <span style={{ fontSize: '16px' }}>📝</span>
+                <h4 style={{ margin: 0, fontSize: '14px', color: '#fb923c', fontWeight: 'bold' }}>{activeDay} 스케줄 한눈에 요약 정리</h4>
+              </div>
+              {filteredItineraries.length === 0 ? (
+                <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>등록된 일정이 없습니다. 일정을 아래에서 추가해 보세요!</p>
+              ) : (
+                <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '13px', color: '#cbd5e1', lineHeight: '1.7' }}>
+                  {filteredItineraries.map((item) => (
+                    <li key={item.id}>
+                      <strong>[{item.time}]</strong> {item.location} 
+                      {item.memo && item.memo.includes('[교통]') && <span style={{ color: '#60a5fa', marginLeft: '4px' }}>(이동 🚇)</span>}
+                      {item.memo && item.memo.includes('[식사]') && <span style={{ color: '#f59e0b', marginLeft: '4px' }}>(맛집 🍛)</span>}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
 
             {/* 일정 추가 폼 */}
@@ -221,7 +297,7 @@ export default function App() {
                 <input type="time" value={newTime} onChange={(e) => setNewTime(e.target.value)} style={{ width: '80px', backgroundColor: '#020617', border: '1px solid #1e293b', borderRadius: '8px', padding: '8px', color: '#fff' }} />
                 <input type="text" placeholder="장소 또는 일정명" value={newLocation} onChange={(e) => setNewLocation(e.target.value)} style={{ flex: 1, backgroundColor: '#020617', border: '1px solid #1e293b', borderRadius: '8px', padding: '8px', color: '#fff' }} />
               </div>
-              <input type="text" placeholder="메모 (선택사항)" value={newMemo} onChange={(e) => setNewMemo(e.target.value)} style={{ width: '100%', backgroundColor: '#020617', border: '1px solid #1e293b', borderRadius: '8px', padding: '8px', color: '#fff', boxSizing: 'border-box', marginBottom: '12px' }} />
+              <input type="text" placeholder="메모 (예: [교통] 지하철이동 / [식사] 점심)" value={newMemo} onChange={(e) => setNewMemo(e.target.value)} style={{ width: '100%', backgroundColor: '#020617', border: '1px solid #1e293b', borderRadius: '8px', padding: '8px', color: '#fff', boxSizing: 'border-box', marginBottom: '12px' }} />
               <button type="submit" style={{ width: '100%', backgroundColor: '#f97316', border: 'none', borderRadius: '8px', padding: '12px', color: '#020617', fontWeight: 'bold', cursor: 'pointer' }}>일정 추가하기</button>
             </form>
 
@@ -244,11 +320,9 @@ export default function App() {
           </div>
         )}
 
-        {/* 2. 가계부 탭 */}
+        {/* ==================== 3. 가계부 탭 ==================== */}
         {activeTab === 'expense' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            
-            {/* 🌟 100% 반영: 자동 조회시점 환율 알림판 */}
             <div style={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '16px', padding: '14px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontSize: '13px', color: '#94a3b8', fontWeight: 'bold' }}>💱 조회시점 실시간 환율</span>
               <span style={{ fontSize: '14px', color: '#38bdf8', fontWeight: 'bold' }}>
@@ -256,7 +330,6 @@ export default function App() {
               </span>
             </div>
 
-            {/* 🌟 100% 반영: 이코카(ICOCA) 충전 및 실시간 잔액 표시 기능 */}
             <div style={{ backgroundColor: '#0b1329', border: '1px solid #1d4ed8', borderRadius: '16px', padding: '16px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                 <div>
@@ -275,10 +348,8 @@ export default function App() {
                 />
                 <button type="submit" style={{ backgroundColor: '#2563eb', border: 'none', borderRadius: '6px', padding: '6px 12px', color: '#fff', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer' }}>충전</button>
               </form>
-              <p style={{ margin: '6px 0 0 2px', fontSize: '11px', color: '#64748b' }}>※ 아래 가계부에 '교통비' 기록 시 잔액에서 자동 차감됩니다.</p>
             </div>
 
-            {/* 가계부 요약 카드 */}
             <div style={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '16px', padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <p style={{ margin: '0 0 4px 0', fontSize: '12px', color: '#94a3b8', fontWeight: 'bold' }}>총 지출 합계 내역</p>
@@ -286,13 +357,12 @@ export default function App() {
                   {totalExpense.toLocaleString()} <span style={{ color: '#fbbf24', fontSize: '16px', fontWeight: 'bold' }}>JPY</span>
                 </h2>
                 <p style={{ margin: '4px 0 0 0', fontSize: '14px', color: '#a1a1aa', fontWeight: '500' }}>
-                  약 {totalExpenseKRW.toLocaleString()} KRW (자동 환산)
+                  약 {totalExpenseKRW.toLocaleString()} KRW
                 </p>
               </div>
               <span style={{ fontSize: '28px', backgroundColor: 'rgba(251,191,36,0.1)', padding: '12px', borderRadius: '12px' }}>💰</span>
             </div>
 
-            {/* 지출 내역 기록 폼 */}
             <form onSubmit={addExpense} style={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '16px', padding: '20px' }}>
               <h3 style={{ margin: '0 0 16px 0', fontSize: '14px', color: '#fbbf24' }}>➕ 지출 내역 추가</h3>
               <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
@@ -309,9 +379,7 @@ export default function App() {
               <button type="submit" style={{ width: '100%', backgroundColor: '#fbbf24', border: 'none', borderRadius: '8px', padding: '12px', color: '#020617', fontWeight: 'bold', cursor: 'pointer' }}>지출 내역 추가</button>
             </form>
 
-            {/* 상세 비용 리스트 내역 */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <p style={{ margin: '4px 0 4px 4px', fontSize: '13px', color: '#94a3b8', fontWeight: 'bold' }}>📋 상세 지출 내역 목록 ({expenses.length}건)</p>
               {expenses.map((item) => {
                 const itemKRW = Math.round((item.amount * exchangeRate) / 100);
                 return (
@@ -334,7 +402,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 3. 준비물 탭 */}
+        {/* ==================== 4. 준비물 탭 ==================== */}
         {activeTab === 'checklist' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             <form onSubmit={addChecklist} style={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '16px', padding: '20px', display: 'flex', gap: '8px' }}>
@@ -358,8 +426,12 @@ export default function App() {
 
       </div>
 
-      {/* 하단 고정 메뉴바 */}
+      {/* 하단 고정 메뉴바 (종합 대시보드 탭 추가!) */}
       <div style={{ position: 'fixed', bottom: '16px', left: '16px', right: '16px', maxWidth: '448px', margin: '0 auto', backgroundColor: 'rgba(15,23,42,0.9)', backdropFilter: 'blur(8px)', border: '1px solid #1e293b', borderRadius: '16px', padding: '8px', display: 'flex', justifyContent: 'space-around', zIndex: 100 }}>
+        <button onClick={() => setActiveTab('dashboard')} style={{ background: 'none', border: 'none', color: activeTab === 'dashboard' ? '#f43f5e' : '#94a3b8', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', fontWeight: activeTab === 'dashboard' ? 'bold' : 'normal' }}>
+          <span style={{ fontSize: '20px' }}>🏠</span>
+          <span style={{ fontSize: '10px' }}>대시보드</span>
+        </button>
         <button onClick={() => setActiveTab('itinerary')} style={{ background: 'none', border: 'none', color: activeTab === 'itinerary' ? '#fb923c' : '#94a3b8', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', fontWeight: activeTab === 'itinerary' ? 'bold' : 'normal' }}>
           <span style={{ fontSize: '20px' }}>🧭</span>
           <span style={{ fontSize: '10px' }}>일정 관리</span>
