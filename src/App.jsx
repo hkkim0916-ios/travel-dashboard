@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
 
-// 디자인 테마 객체
 const theme = {
   bg: '#020617',
   card: '#0f172a',
@@ -36,68 +35,95 @@ function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [activeDay, setActiveDay] = useState('Day 1');
   const [exchangeRate, setExchangeRate] = useState(900);
-  
-  const [itineraries, setItineraries] = useState(() => JSON.parse(localStorage.getItem('sapporo_itineraries') || 'null') || masterItineraries);
-  const [expenses, setExpenses] = useState(() => JSON.parse(localStorage.getItem('sapporo_expenses') || '[]'));
-  const [checklists, setChecklists] = useState(() => JSON.parse(localStorage.getItem('sapporo_checklists') || '[]'));
-  const [icocaBalance, setIcocaBalance] = useState(() => parseInt(localStorage.getItem('sapporo_icoca') || '2000', 10));
+  const [itineraries, setItineraries] = useState(() => JSON.parse(localStorage.getItem('sapporo_itineraries')) || masterItineraries);
+  const [expenses, setExpenses] = useState(() => JSON.parse(localStorage.getItem('sapporo_expenses')) || []);
+  const [checklists, setChecklists] = useState(() => JSON.parse(localStorage.getItem('sapporo_checklists')) || []);
+  const [icocaBalance, setIcocaBalance] = useState(() => parseInt(localStorage.getItem('sapporo_icoca') || 2000, 10));
 
-  // 정합성 검증: API 데이터 오류 방지
+  const [newLocation, setNewLocation] = useState('');
+  const [newTime, setNewTime] = useState('12:00');
+  const [newMemo, setNewMemo] = useState('');
+  const [expCategory, setExpCategory] = useState('식비');
+  const [expAmount, setExpAmount] = useState('');
+  const [expMemo, setExpMemo] = useState('');
+  const [newTodo, setNewTodo] = useState('');
+
   useEffect(() => {
     fetch('https://open.er-api.com/v6/latest/JPY')
-      .then(res => res.ok ? res.json() : Promise.reject())
-      .then(data => {
-        if (data?.rates?.KRW) setExchangeRate(parseFloat((data.rates.KRW * 100).toFixed(2)));
-      })
-      .catch(() => console.warn("환율 정보 로드 실패, 기본값 유지"));
+      .then(res => res.json())
+      .then(data => data?.rates?.KRW && setExchangeRate(parseFloat((data.rates.KRW * 100).toFixed(2))));
   }, []);
 
-  // 데이터 지속성: 로컬스토리지 동기화
-  useEffect(() => localStorage.setItem('sapporo_itineraries', JSON.stringify(itineraries)), [itineraries]);
-  useEffect(() => localStorage.setItem('sapporo_expenses', JSON.stringify(expenses)), [expenses]);
-  useEffect(() => localStorage.setItem('sapporo_checklists', JSON.stringify(checklists)), [checklists]);
-  useEffect(() => localStorage.setItem('sapporo_icoca', icocaBalance.toString()), [icocaBalance]);
+  useEffect(() => {
+    localStorage.setItem('sapporo_itineraries', JSON.stringify(itineraries));
+    localStorage.setItem('sapporo_expenses', JSON.stringify(expenses));
+    localStorage.setItem('sapporo_checklists', JSON.stringify(checklists));
+    localStorage.setItem('sapporo_icoca', icocaBalance.toString());
+  }, [itineraries, expenses, checklists, icocaBalance]);
 
-  const totalExpense = useMemo(() => expenses.reduce((sum, item) => sum + (Number(item.amount) || 0), 0), [expenses]);
-  const totalExpenseKRW = Math.round((totalExpense * exchangeRate) / 100);
+  const addItinerary = (e) => { e.preventDefault(); if(!newLocation) return; setItineraries([...itineraries, { id: Date.now(), day: activeDay, time: newTime, location: newLocation, memo: newMemo }].sort((a,b) => a.time.localeCompare(b.time))); setNewLocation(''); };
+  const addExpense = (e) => { e.preventDefault(); if(!expAmount) return; setExpenses([...expenses, { id: Date.now(), category: expCategory, amount: parseInt(expAmount), memo: expMemo }]); if(expCategory === '교통비') setIcocaBalance(p => Math.max(0, p - parseInt(expAmount))); setExpAmount(''); };
+  const addChecklist = (e) => { e.preventDefault(); if(!newTodo) return; setChecklists([...checklists, { id: Date.now(), task: newTodo, completed: false }]); setNewTodo(''); };
+
+  const totalExpense = expenses.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: theme.bg, color: theme.text, fontFamily: 'system-ui, sans-serif' }}>
-      <header style={{ padding: '20px', background: theme.card, borderBottom: `1px solid ${theme.border}`, textAlign: 'center' }}>
-        <h1 style={{ margin: 0, fontSize: '18px', color: theme.primary }}>삿포로 2026 관리 시스템</h1>
+    <div style={{ minHeight: '100vh', backgroundColor: theme.bg, color: theme.text, fontFamily: 'sans-serif', paddingBottom: '80px' }}>
+      <header style={{ padding: '20px', textAlign: 'center', borderBottom: `1px solid ${theme.border}` }}>
+        <h1 style={{ fontSize: '18px', color: theme.primary, margin: 0 }}>삿포로 2026 관리 시스템</h1>
       </header>
 
-      <main style={{ padding: '16px', maxWidth: '500px', margin: '0 auto' }}>
+      <main style={{ padding: '16px' }}>
         {activeTab === 'dashboard' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-            <div style={{ padding: '20px', backgroundColor: theme.card, borderRadius: '12px' }}>
-              <p style={{ margin: 0, color: theme.subText }}>실시간 환율 (100엔)</p>
-              <h2 style={{ margin: '5px 0', color: theme.accent }}>{exchangeRate.toLocaleString()} KRW</h2>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-              <div style={{ padding: '15px', backgroundColor: theme.card, borderRadius: '12px' }}>
-                <p style={{ margin: 0, fontSize: '12px', color: theme.subText }}>총 지출</p>
-                <strong>{totalExpense.toLocaleString()} ¥</strong>
-              </div>
-              <div style={{ padding: '15px', backgroundColor: theme.card, borderRadius: '12px' }}>
-                <p style={{ margin: 0, fontSize: '12px', color: theme.subText }}>교통카드</p>
-                <strong>{icocaBalance.toLocaleString()} ¥</strong>
-              </div>
-            </div>
+          <div>
+            <h3>🏠 대시보드</h3>
+            <p>환율: 100엔당 {exchangeRate}원</p>
+            <p>총 지출: {totalExpense.toLocaleString()} ¥ (약 {Math.round((totalExpense * exchangeRate)/100).toLocaleString()}원)</p>
           </div>
         )}
         
-        {/* 각 탭별 로직 분기 처리 */}
-        {activeTab !== 'dashboard' && (
-          <div style={{ textAlign: 'center', marginTop: '50px', color: theme.subText }}>
-            기능 구현 완료: 해당 탭의 상세 폼을 배치하세요.
+        {activeTab === 'itinerary' && (
+          <div>
+            <h3>🧭 일정 ({activeDay})</h3>
+            <div style={{ display: 'flex', gap: '5px', marginBottom: '10px' }}>
+              {['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5'].map(d => <button key={d} onClick={() => setActiveDay(d)} style={{ background: activeDay === d ? theme.primary : theme.card, border: 'none', color: 'white', padding: '5px 10px', borderRadius: '5px' }}>{d}</button>)}
+            </div>
+            <form onSubmit={addItinerary} style={{ background: theme.card, padding: '10px', borderRadius: '8px' }}>
+              <input value={newTime} onChange={e => setNewTime(e.target.value)} type="time" />
+              <input value={newLocation} onChange={e => setNewLocation(e.target.value)} placeholder="장소" />
+              <button type="submit">추가</button>
+            </form>
+            {itineraries.filter(i => i.day === activeDay).map(i => <div key={i.id} style={{ padding: '10px', borderBottom: '1px solid #333' }}>{i.time} - {i.location}</div>)}
+          </div>
+        )}
+
+        {activeTab === 'expense' && (
+          <div>
+            <h3>💳 가계부</h3>
+            <form onSubmit={addExpense} style={{ background: theme.card, padding: '10px', borderRadius: '8px' }}>
+              <input value={expAmount} onChange={e => setExpAmount(e.target.value)} placeholder="금액" type="number" />
+              <input value={expMemo} onChange={e => setExpMemo(e.target.value)} placeholder="내역" />
+              <button type="submit">지출 등록</button>
+            </form>
+            {expenses.map(e => <div key={e.id}>{e.memo}: {e.amount}¥</div>)}
+          </div>
+        )}
+
+        {activeTab === 'checklist' && (
+          <div>
+            <h3>✅ 준비물</h3>
+            <form onSubmit={addChecklist} style={{ background: theme.card, padding: '10px', borderRadius: '8px' }}>
+              <input value={newTodo} onChange={e => setNewTodo(e.target.value)} placeholder="새 준비물" />
+              <button type="submit">추가</button>
+            </form>
+            {checklists.map(c => <div key={c.id} onClick={() => setChecklists(checklists.map(x => x.id === c.id ? {...x, completed: !x.completed} : x))}>{c.completed ? '✅' : '⬜'} {c.task}</div>)}
           </div>
         )}
       </main>
 
-      <nav style={{ position: 'fixed', bottom: 0, width: '100%', maxWidth: '500px', left: '50%', transform: 'translateX(-50%)', backgroundColor: theme.card, display: 'flex', justifyContent: 'space-around', padding: '15px 0', borderTop: `1px solid ${theme.border}` }}>
+      <nav style={{ position: 'fixed', bottom: 0, width: '100%', backgroundColor: theme.card, display: 'flex', justifyContent: 'space-around', padding: '15px 0', borderTop: `1px solid ${theme.border}` }}>
         {['dashboard', 'itinerary', 'expense', 'checklist'].map(tab => (
-          <button key={tab} onClick={() => setActiveTab(tab)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '20px', opacity: activeTab === tab ? 1 : 0.4 }}>
+          <button key={tab} onClick={() => setActiveTab(tab)} style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', opacity: activeTab === tab ? 1 : 0.4 }}>
             {tab === 'dashboard' ? '🏠' : tab === 'itinerary' ? '🧭' : tab === 'expense' ? '💳' : '✅'}
           </button>
         ))}
