@@ -30,7 +30,6 @@ function App() {
   const [itineraries, setItineraries] = useState(() => JSON.parse(localStorage.getItem('sapporo_itineraries')) || masterItineraries);
   const [expenses, setExpenses] = useState(() => JSON.parse(localStorage.getItem('sapporo_expenses')) || [{ id: 1, category: '교통비', amount: 1300, memo: '공항 리무진 버스' }, { id: 2, category: '식비', amount: 3500, memo: '맥주축제' }]);
   const [checklists, setChecklists] = useState(() => JSON.parse(localStorage.getItem('sapporo_checklists')) || [{ id: 1, task: '여권 및 QR 코드 확인', completed: true }, { id: 2, task: '교통카드 챙기기', completed: true }, { id: 3, task: '돼지코 어댑터 챙기기', completed: false }]);
-
   const [newLocation, setNewLocation] = useState('');
   const [newTime, setNewTime] = useState('12:00');
   const [newMemo, setNewMemo] = useState('');
@@ -51,82 +50,57 @@ function App() {
   useEffect(() => { localStorage.setItem('sapporo_checklists', JSON.stringify(checklists)); }, [checklists]);
   useEffect(() => { localStorage.setItem('sapporo_icoca', icocaBalance.toString()); }, [icocaBalance]);
 
-  const addItinerary = (e) => {
-    e.preventDefault();
-    setItineraries([...itineraries, { id: Date.now(), day: activeDay, time: newTime, location: newLocation, memo: newMemo }].sort((a, b) => a.time.localeCompare(b.time)));
-    setNewLocation(''); setNewMemo('');
-  };
-
-  const deleteItinerary = (id) => setItineraries(itineraries.filter(i => i.id !== id));
-  const addExpense = (e) => {
-    e.preventDefault();
-    setExpenses([...expenses, { id: Date.now(), category: expCategory, amount: parseInt(expAmount, 10), memo: expMemo }]);
-    if (expCategory === '교통비') setIcocaBalance(prev => Math.max(0, prev - parseInt(expAmount, 10)));
-    setExpAmount(''); setExpMemo('');
-  };
-  const deleteExpense = (id) => setExpenses(expenses.filter(i => i.id !== id));
-  const toggleChecklist = (id) => setChecklists(checklists.map(i => i.id === id ? { ...i, completed: !i.completed } : i));
-  const addChecklist = (e) => { e.preventDefault(); setChecklists([...checklists, { id: Date.now(), task: newTodo, completed: false }]); setNewTodo(''); };
-  const deleteChecklist = (id) => setChecklists(checklists.filter(i => i.id !== id));
-  const handleChargeIcoca = (e) => { e.preventDefault(); setIcocaBalance(prev => prev + parseInt(icocaInput, 10)); setIcocaInput(''); };
+  const addItinerary = (e) => { e.preventDefault(); if (!newLocation) return; setItineraries([...itineraries, { id: Date.now(), day: activeDay, time: newTime, location: newLocation, memo: newMemo }].sort((a,b)=>a.time.localeCompare(b.time))); setNewLocation(''); setNewMemo(''); };
+  const deleteItinerary = (id) => setItineraries(itineraries.filter(i=>i.id !== id));
+  const addExpense = (e) => { e.preventDefault(); if(!expAmount) return; setExpenses([...expenses, {id: Date.now(), category: expCategory, amount: parseInt(expAmount), memo: expMemo}]); if(expCategory==='교통비') setIcocaBalance(p => p - parseInt(expAmount)); setExpAmount(''); setExpMemo(''); };
+  const deleteExpense = (id) => setExpenses(expenses.filter(i=>i.id !== id));
+  const addChecklist = (e) => { e.preventDefault(); if(!newTodo) return; setChecklists([...checklists, {id: Date.now(), task: newTodo, completed: false}]); setNewTodo(''); };
+  const deleteChecklist = (id) => setChecklists(checklists.filter(i=>i.id !== id));
+  const toggleChecklist = (id) => setChecklists(checklists.map(i=>i.id === id ? {...i, completed: !i.completed} : i));
+  const handleChargeIcoca = (e) => { e.preventDefault(); setIcocaBalance(p => p + parseInt(icocaInput)); setIcocaInput(''); };
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#020617', color: '#f8fafc', paddingBottom: '110px', fontFamily: 'sans-serif' }}>
-      <div style={{ background: 'linear-gradient(to right, #ea580c, #f59e0b)', padding: '24px', textAlign: 'center' }}>
-        <h1 style={{ margin: 0, fontSize: '20px', color: '#fff' }}>삿포로 여름 축제 대시보드</h1>
+    <div style={{ minHeight: '100vh', backgroundColor: '#020617', color: '#f8fafc', paddingBottom: '110px' }}>
+      <div style={{ background: 'linear-gradient(to right, #ea580c, #f59e0b)', padding: '24px' }}>
+        <h1 style={{ margin:0, color: '#fff' }}>삿포로 대시보드</h1>
       </div>
-
+      
       <div style={{ maxWidth: '448px', margin: '0 auto', padding: '16px' }}>
         {activeTab === 'dashboard' && (
           <div>
-            <h3>환율 (100엔): {exchangeRate}원</h3>
+            <h3>환율: {exchangeRate}원</h3>
             <div style={{ background: '#0f172a', padding: '16px', borderRadius: '16px' }}>
-              <h4>💳 카드 잔액: {icocaBalance.toLocaleString()} ¥</h4>
-              <form onSubmit={handleChargeIcoca}>
-                <input type="number" value={icocaInput} onChange={(e) => setIcocaInput(e.target.value)} placeholder="충전" />
-                <button type="submit">충전</button>
-              </form>
+              <h4>ICOCA: {icocaBalance} ¥</h4>
+              <form onSubmit={handleChargeIcoca}><input type="number" value={icocaInput} onChange={e=>setIcocaInput(e.target.value)} /><button type="submit">충전</button></form>
             </div>
-            <h4>전체 일정 요약</h4>
-            {itineraries.slice(0, 6).map(i => <div key={i.id}>{i.time} {i.location}</div>)}
           </div>
         )}
-
+        
         {activeTab === 'itinerary' && (
           <div>
-            <div style={{ display: 'flex', gap: '5px', marginBottom: '10px' }}>
-              {['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5'].map(day => (
-                <button key={day} onClick={() => setActiveDay(day)}>{day}</button>
-              ))}
-            </div>
-            {itineraries.filter(i => i.day === activeDay).map(i => (
-              <div key={i.id} style={{ background: '#0f172a', margin: '8px 0', padding: '10px' }}>
-                <p>{i.time} - {i.location}</p>
-                <p style={{ fontSize: '12px' }}>{i.memo}</p>
-                <button onClick={() => deleteItinerary(i.id)}>삭제</button>
-              </div>
-            ))}
+            {['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5'].map(d => <button key={d} onClick={()=>setActiveDay(d)}>{d}</button>)}
+            <form onSubmit={addItinerary}><input value={newLocation} onChange={e=>setNewLocation(e.target.value)} /><button type="submit">등록</button></form>
+            {itineraries.filter(i => i.day === activeDay).map(i => <div key={i.id} style={{background:'#0f172a', margin:'8px 0', padding:'10px'}}>{i.time} {i.location} <p>{i.memo}</p><button onClick={()=>deleteItinerary(i.id)}>삭제</button></div>)}
           </div>
         )}
-
+        
         {activeTab === 'expense' && (
           <div>
-            {expenses.map(i => <div key={i.id}>{i.memo}: {i.amount}¥ <button onClick={() => deleteExpense(i.id)}>삭제</button></div>)}
+            <form onSubmit={addExpense}><select onChange={e=>setExpCategory(e.target.value)}><option>식비</option><option>교통비</option></select><input type="number" value={expAmount} onChange={e=>setExpAmount(e.target.value)} /><button type="submit">지출 등록</button></form>
+            {expenses.map(i => <div key={i.id}>{i.memo}: {i.amount}¥ <button onClick={()=>deleteExpense(i.id)}>삭제</button></div>)}
           </div>
         )}
-
+        
         {activeTab === 'checklist' && (
           <div>
-            {checklists.map(i => <div key={i.id} onClick={() => toggleChecklist(i.id)}>{i.completed ? '✅' : '⬜'} {i.task} <button onClick={() => deleteChecklist(i.id)}>삭제</button></div>)}
+            <form onSubmit={addChecklist}><input value={newTodo} onChange={e=>setNewTodo(e.target.value)} /><button type="submit">추가</button></form>
+            {checklists.map(i => <div key={i.id} onClick={()=>toggleChecklist(i.id)}>{i.completed ? '✅' : '⬜'} {i.task} <button onClick={()=>deleteChecklist(i.id)}>삭제</button></div>)}
           </div>
         )}
       </div>
 
-      <div style={{ position: 'fixed', bottom: 0, width: '100%', maxWidth: '448px', display: 'flex', background: '#0f172a', padding: '10px', margin: '0 auto', left: 0, right: 0 }}>
-        <button onClick={() => setActiveTab('dashboard')}>🏠 대시보드</button>
-        <button onClick={() => setActiveTab('itinerary')}>🧭 일정</button>
-        <button onClick={() => setActiveTab('expense')}>💳 가계부</button>
-        <button onClick={() => setActiveTab('checklist')}>✅ 준비물</button>
+      <div style={{ position: 'fixed', bottom: 0, width: '100%', maxWidth: '448px', display: 'flex', background: '#0f172a', padding: '10px', left:'50%', transform:'translateX(-50%)' }}>
+        {['dashboard', 'itinerary', 'expense', 'checklist'].map(t => <button key={t} onClick={()=>setActiveTab(t)}>{t}</button>)}
       </div>
     </div>
   );
