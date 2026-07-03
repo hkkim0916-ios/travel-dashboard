@@ -7,33 +7,35 @@ export default function App() {
   // 일정 내부에서 사용하는 '날짜별 서브 탭' (Day 1, Day 2, Day 3)
   const [activeDay, setActiveDay] = useState('Day 1');
   
-  // 환율 상태 관리 (기본값 100엔 = 900원 가정)
-  const [exchangeRate, setExchangeRate] = useState(() => {
-    const saved = localStorage.getItem('sapporo_rate');
-    return saved ? parseFloat(saved) : 900;
+  // 🌟 실시간 환율 상태 (조회시점 환율 자동 반영용, 기본값 900원 설정)
+  const [exchangeRate, setExchangeRate] = useState(900);
+  const [rateLoading, setRateLoading] = useState(true);
+
+  // 🌟 이코카(ICOCA) 카드 충전 및 잔액 상태 관리
+  const [icocaBalance, setIcocaBalance] = useState(() => {
+    const saved = localStorage.getItem('sapporo_icoca');
+    return saved ? parseInt(saved, 10) : 2000; // 초기 충전금액 기본값 2,000엔
   });
+  const [icocaInput, setIcocaInput] = useState('');
 
   // 복원된 추천 일정 및 전체 교통편 초기 데이터
   const [itineraries, setItineraries] = useState(() => {
     const saved = localStorage.getItem('sapporo_itineraries');
     return saved ? JSON.parse(saved) : [
-      // Day 1: 공항 도착 및 삿포로 시내 (추천 일정 & 교통편)
-      { id: 1, day: 'Day 1', time: '10:00', location: '신치토세 공항 도착', memo: '🛄 포켓 와이파이 수령 및 JR 패스 / 교통카드 충전' },
+      { id: 1, day: 'Day 1', time: '10:00', location: '신치토세 공항 도착', memo: '🛄 포켓 와이파이 수령 및 JR 패스 / 이코카(ICOCA) 교통카드 충전 확인' },
       { id: 2, day: 'Day 1', time: '11:00', location: '신치토세 공항역 ➡ 삿포로역 (JR 쾌속 에어포트)', memo: '🚇 [교통] 약 37분 소요 (지정석 추천)' },
       { id: 3, day: 'Day 1', time: '13:00', location: '스스키노 라멘 골목 (원조 라멘요코초)', memo: '🍜 [식사] 삿포로 명물 미소라멘으로 점심 식사' },
       { id: 4, day: 'Day 1', time: '15:00', location: '숙소 체크인 (스스키노 인근)', memo: '🏨 짐 풀고 가벼운 복장으로 정비하기' },
       { id: 5, day: 'Day 1', time: '18:00', location: '오도리 공원 (삿포로 여름 축제)', memo: '🍺 [축제] 비어가든에서 시원한 삿포로 생맥주와 축제 즐기기!' },
 
-      // Day 2: 오타루 당일치기 코스 (추천 일정 & 교통편)
       { id: 6, day: 'Day 2', time: '09:00', location: '삿포로역 ➡ 오타루역 (JR 하코다테 본선)', memo: '🚇 [교통] 열차 진행 방향 기준 우측 창가 자리가 바다 뷰 명당!' },
       { id: 7, day: 'Day 2', time: '10:30', location: '오타루 운하 & 사카이마치도리 공방거리', memo: '📸 오르골당, 유리공예 투어 및 디저트(르타오) 맛보기' },
       { id: 8, day: 'Day 2', time: '13:00', location: '오타루 스시 거리 (스시야도리)', memo: '🍣 [식사] 만화 미스터 초밥왕의 배경지에서 신선한 스시 점심' },
       { id: 9, day: 'Day 2', time: '18:30', location: '미나미오타루역 ➡ 삿포로역 복귀', memo: '🚇 [교통] 복귀 열차 안에서 휴식' },
       { id: 10, day: 'Day 2', time: '20:00', location: '스스키노 다루마 (징기스칸)', memo: '🥩 [식사] 삿포로 여행 필수 코스 양고기 구이에 나마비루 한 잔' },
 
-      // Day 3: 시내 쇼핑 및 랜드마크 (추천 일정 & 교통편)
       { id: 11, day: 'Day 3', time: '10:00', location: '삿포로 TV 타워 & 시계탑', memo: '🗼 시내 중심가 랜드마크 배경으로 기념사진 촬영' },
-      { id: 12, day: 'Day 3', time: '11:30', location: '삿포로 맥주 박물관', memo: '🍺 [교통] 삿포로역 사포로에키마에 버스정류장에서 [Loop 88] 버스 탑승' },
+      { id: 12, day: 'Day 3', time: '11:30', location: '삿포로 맥주 박물관', memo: '🍺 [교통] 삿포로역 사포로에키마에 버스정류장에서 [Loop 88] 버스 탑승 (이코카 사용 가능)' },
       { id: 13, day: 'Day 3', time: '12:00', location: '맥주 박물관 투어 및 시음', memo: '🍻 오리지널 삿포로 맥주 3종 샘플러 시음 필수 (유료)' },
       { id: 14, day: 'Day 3', time: '15:00', location: '다누키코지 상점가 쇼핑', memo: '🛍️ 돈키호테 및 드럭스토어 기념품, 의류 쇼핑' },
       { id: 15, day: 'Day 3', time: '18:00', location: '삿포로역 ➡ 신치토세 공항 복귀', memo: '🚇 [교통] 비행기 출발 2시간 반 전에는 공항 도착하도록 출발' }
@@ -54,10 +56,9 @@ export default function App() {
     const saved = localStorage.getItem('sapporo_checklists');
     return saved ? JSON.parse(saved) : [
       { id: 1, task: '여권 및 비자 확인', completed: true },
-      { id: 2, task: '엔화 환전 및 트래블로그 카드 확인', completed: true },
+      { id: 2, task: '엔화 환전 및 이코카 실물 카드 확인', completed: true },
       { id: 3, task: '돼지코(110V 어댑터) 챙기기', completed: false },
-      { id: 4, task: '비어가든 축제 사전 정보 체크', completed: false },
-      { id: 5, task: '일본 비짓재팬웹(Visit Japan Web) 등록', completed: false }
+      { id: 4, task: '일본 비짓재팬웹(Visit Japan Web) 등록', completed: false }
     ];
   });
 
@@ -71,6 +72,24 @@ export default function App() {
   const [expMemo, setExpMemo] = useState('');
 
   const [newTodo, setNewTodo] = useState('');
+
+  // 🌟 실시간 환율 API 호출 (무료 오픈 API 활용하여 조회시점 환율 파싱)
+  useEffect(() => {
+    fetch('https://open.er-api.com/v6/latest/JPY')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && data.rates && data.rates.KRW) {
+          // 1엔당 원화 가격이 나오므로 100을 곱해 100엔당 원화 환율 계산
+          const rate100Yen = data.rates.KRW * 100;
+          setExchangeRate(parseFloat(rate100Yen.toFixed(2)));
+        }
+        setRateLoading(false);
+      })
+      .catch((err) => {
+        console.error('환율 로드 실패, 기본값 우회:', err);
+        setRateLoading(false);
+      });
+  }, []);
 
   // 로컬스토리지 동기화
   useEffect(() => {
@@ -86,8 +105,8 @@ export default function App() {
   }, [checklists]);
 
   useEffect(() => {
-    localStorage.setItem('sapporo_rate', exchangeRate.toString());
-  }, [exchangeRate]);
+    localStorage.setItem('sapporo_icoca', icocaBalance.toString());
+  }, [icocaBalance]);
 
   // 핸들러 함수들
   const addItinerary = (e) => {
@@ -103,16 +122,33 @@ export default function App() {
     setItineraries(itineraries.filter(item => item.id !== id));
   };
 
+  // 🌟 지출 추가할 때 교통비 항목이면 이코카 잔액에서 자동 차감 옵션 포함
   const addExpense = (e) => {
     e.preventDefault();
     if (!expAmount || isNaN(expAmount)) return;
-    setExpenses([...expenses, { id: Date.now(), category: expCategory, amount: parseInt(expAmount, 10), memo: expMemo }]);
+    const amountNum = parseInt(expAmount, 10);
+    
+    setExpenses([...expenses, { id: Date.now(), category: expCategory, amount: amountNum, memo: expMemo }]);
+    
+    // 교통비 입력 시 이코카 카드 잔액에서 차감 연동
+    if (expCategory === '교통비') {
+      setIcocaBalance(prev => Math.max(0, prev - amountNum));
+    }
+    
     setExpAmount('');
     setExpMemo('');
   };
 
   const deleteExpense = (id) => {
     setExpenses(expenses.filter(item => item.id !== id));
+  };
+
+  // 🌟 이코카 카드 직접 충전 기능
+  const handleChargeIcoca = (e) => {
+    e.preventDefault();
+    if (!icocaInput || isNaN(icocaInput)) return;
+    setIcocaBalance(prev => prev + parseInt(icocaInput, 10));
+    setIcocaInput('');
   };
 
   const toggleChecklist = (id) => {
@@ -170,8 +206,7 @@ export default function App() {
                     backgroundColor: activeDay === day ? '#f97316' : 'transparent',
                     color: activeDay === day ? '#020617' : '#94a3b8',
                     fontWeight: 'bold',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
+                    cursor: 'pointer'
                   }}
                 >
                   {day}
@@ -192,23 +227,19 @@ export default function App() {
 
             {/* 타임라인 일정 목록 */}
             <div style={{ borderLeft: '2px solid #1e293b', marginLeft: '12px', paddingLeft: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {filteredItineraries.length === 0 ? (
-                <p style={{ color: '#64748b', fontSize: '14px', margin: '16px 0' }}>등록된 일정이 없습니다. 일정을 추가해 보세요!</p>
-              ) : (
-                filteredItineraries.map((item) => (
-                  <div key={item.id} style={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '16px', padding: '16px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ fontSize: '12px', color: '#fb923c', backgroundColor: 'rgba(249,115,22,0.1)', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold' }}>⏰ {item.time}</span>
-                      <h4 style={{ margin: 0, flex: 1, fontSize: '16px', fontWeight: 'bold' }}>{item.location}</h4>
-                      <div>
-                        <button onClick={() => handleMapSearch(item.location)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px', padding: '4px' }}>📍</button>
-                        <button onClick={() => deleteItinerary(item.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px', padding: '4px' }}>🗑️</button>
-                      </div>
+              {filteredItineraries.map((item) => (
+                <div key={item.id} style={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '16px', padding: '16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '12px', color: '#fb923c', backgroundColor: 'rgba(249,115,22,0.1)', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold' }}>⏰ {item.time}</span>
+                    <h4 style={{ margin: 0, flex: 1, fontSize: '16px', fontWeight: 'bold' }}>{item.location}</h4>
+                    <div>
+                      <button onClick={() => handleMapSearch(item.location)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px', padding: '4px' }}>📍</button>
+                      <button onClick={() => deleteItinerary(item.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px', padding: '4px' }}>🗑️</button>
                     </div>
-                    {item.memo && <p style={{ margin: '8px 0 0 0', fontSize: '14px', color: '#cbd5e1', lineHeight: '1.4' }}>{item.memo}</p>}
                   </div>
-                ))
-              )}
+                  {item.memo && <p style={{ margin: '8px 0 0 0', fontSize: '14px', color: '#cbd5e1', lineHeight: '1.4' }}>{item.memo}</p>}
+                </div>
+              ))}
             </div>
           </div>
         )}
@@ -217,24 +248,37 @@ export default function App() {
         {activeTab === 'expense' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             
-            {/* 환율 정보 설정 카드 */}
-            <div style={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '16px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
-              <div>
-                <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 'bold' }}>💴 적용 환율 설정</span>
-                <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#cbd5e1' }}>100엔당 원화 환율 입력:</p>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <input 
-                  type="number" 
-                  value={exchangeRate} 
-                  onChange={(e) => setExchangeRate(Number(e.target.value))} 
-                  style={{ width: '70px', backgroundColor: '#020617', border: '1px solid #334155', borderRadius: '6px', padding: '6px', color: '#fff', textAlign: 'center', fontWeight: 'bold' }}
-                />
-                <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#94a3b8' }}>원</span>
-              </div>
+            {/* 🌟 100% 반영: 자동 조회시점 환율 알림판 */}
+            <div style={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '16px', padding: '14px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '13px', color: '#94a3b8', fontWeight: 'bold' }}>💱 조회시점 실시간 환율</span>
+              <span style={{ fontSize: '14px', color: '#38bdf8', fontWeight: 'bold' }}>
+                {rateLoading ? '🔄 로딩 중...' : `100¥ = ${exchangeRate.toLocaleString()}원`}
+              </span>
             </div>
 
-            {/* 가계부 요약 카드 (엔화/원화 동시 표시) */}
+            {/* 🌟 100% 반영: 이코카(ICOCA) 충전 및 실시간 잔액 표시 기능 */}
+            <div style={{ backgroundColor: '#0b1329', border: '1px solid #1d4ed8', borderRadius: '16px', padding: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <div>
+                  <span style={{ fontSize: '11px', color: '#3b82f6', fontWeight: 'bold', backgroundColor: 'rgba(59,130,246,0.1)', padding: '2px 6px', borderRadius: '4px' }}>ICOCA CARD</span>
+                  <h4 style={{ margin: '4px 0 0 0', fontSize: '18px', fontWeight: 'bold', color: '#eff6ff' }}>이코카 카드 잔액</h4>
+                </div>
+                <span style={{ fontSize: '20px', fontWeight: '900', color: '#60a5fa' }}>{icocaBalance.toLocaleString()} ¥</span>
+              </div>
+              <form onSubmit={handleChargeIcoca} style={{ display: 'flex', gap: '6px' }}>
+                <input 
+                  type="number" 
+                  placeholder="충전할 엔화 입력" 
+                  value={icocaInput}
+                  onChange={(e) => setIcocaInput(e.target.value)}
+                  style={{ flex: 1, backgroundColor: '#020617', border: '1px solid #1e4ed8', borderRadius: '6px', padding: '6px 10px', color: '#fff', fontSize: '13px' }}
+                />
+                <button type="submit" style={{ backgroundColor: '#2563eb', border: 'none', borderRadius: '6px', padding: '6px 12px', color: '#fff', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer' }}>충전</button>
+              </form>
+              <p style={{ margin: '6px 0 0 2px', fontSize: '11px', color: '#64748b' }}>※ 아래 가계부에 '교통비' 기록 시 잔액에서 자동 차감됩니다.</p>
+            </div>
+
+            {/* 가계부 요약 카드 */}
             <div style={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '16px', padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <p style={{ margin: '0 0 4px 0', fontSize: '12px', color: '#94a3b8', fontWeight: 'bold' }}>총 지출 합계 내역</p>
@@ -242,7 +286,7 @@ export default function App() {
                   {totalExpense.toLocaleString()} <span style={{ color: '#fbbf24', fontSize: '16px', fontWeight: 'bold' }}>JPY</span>
                 </h2>
                 <p style={{ margin: '4px 0 0 0', fontSize: '14px', color: '#a1a1aa', fontWeight: '500' }}>
-                  약 {totalExpenseKRW.toLocaleString()} KRW
+                  약 {totalExpenseKRW.toLocaleString()} KRW (자동 환산)
                 </p>
               </div>
               <span style={{ fontSize: '28px', backgroundColor: 'rgba(251,191,36,0.1)', padding: '12px', borderRadius: '12px' }}>💰</span>
@@ -265,7 +309,7 @@ export default function App() {
               <button type="submit" style={{ width: '100%', backgroundColor: '#fbbf24', border: 'none', borderRadius: '8px', padding: '12px', color: '#020617', fontWeight: 'bold', cursor: 'pointer' }}>지출 내역 추가</button>
             </form>
 
-            {/* 전체 지출 비용 리스트 내역 */}
+            {/* 상세 비용 리스트 내역 */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <p style={{ margin: '4px 0 4px 4px', fontSize: '13px', color: '#94a3b8', fontWeight: 'bold' }}>📋 상세 지출 내역 목록 ({expenses.length}건)</p>
               {expenses.map((item) => {
