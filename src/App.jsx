@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-// import './App.css'; ⬅️ 파일이 존재하지 않아 에러를 유발하던 라인을 완전히 제거했습니다.
 
 function App() {
   // 5일 차 마스터 풀 스케줄 데이터
@@ -33,17 +32,17 @@ function App() {
     { id: 18, day: 'Day 5', time: '12:15', location: '공항 국내선 청사 투어', memo: '🍜 라멘 도조에서 든든하게 점심 식사 후 비행기 타고 귀국 (~14:30)' }
   ];
 
-  // 메인 메뉴 탭 설정 ('dashboard': 종합 대시보드, 'itinerary': 일정 관리, 'expense': 가계부, 'checklist': 준비물)
+  // 메인 메뉴 탭 설정 ('dashboard', 'itinerary', 'expense', 'checklist')
   const [activeTab, setActiveTab] = useState('dashboard');
   
-  // Day 1부터 Day 5까지 날짜별 서브 탭 상태 변수 (기본값 Day 1)
+  // Day 서브 탭 상태 변수 (기본값 Day 1)
   const [activeDay, setActiveDay] = useState('Day 1');
   
-  // 실시간 환율 상태 (기본값 900원 설정)
+  // 실시간 환율 상태 (기본값 900원)
   const [exchangeRate, setExchangeRate] = useState(900);
   const [rateLoading, setRateLoading] = useState(true);
 
-  // 이코카(ICOCA) 카드 충전 및 잔액 상태 관리 (초기 금액 2,000엔 기본 세팅)
+  // 이코카 카드 잔액 상태 관리
   const [icocaBalance, setIcocaBalance] = useState(() => {
     const saved = localStorage.getItem('sapporo_icoca');
     return saved ? parseInt(saved, 10) : 2000;
@@ -90,7 +89,7 @@ function App() {
 
   const [newTodo, setNewTodo] = useState('');
 
-  // 오픈 환율 API 호출
+  // 환율 API 호출
   useEffect(() => {
     fetch('https://open.er-api.com/v6/latest/JPY')
       .then((res) => res.json())
@@ -99,7 +98,7 @@ function App() {
           const rate100Yen = data.rates.KRW * 100;
           setExchangeRate(parseFloat(rate100Yen.toFixed(2)));
         }
-        setRateLoading(false)
+        setRateLoading(false);
       })
       .catch((err) => {
         console.error('환율 로드 실패:', err);
@@ -124,7 +123,7 @@ function App() {
     localStorage.setItem('sapporo_icoca', icocaBalance.toString());
   }, [icocaBalance]);
 
-  // 일정 핸들러 함수들
+  // 일정 추가 함수
   const addItinerary = (e) => {
     e.preventDefault();
     if (!newLocation.trim()) return;
@@ -140,7 +139,7 @@ function App() {
     }
   };
 
-  // 가계부 핸들러 함수들
+  // 가계부 지출 추가 함수
   const addExpense = (e) => {
     e.preventDefault();
     if (!expAmount || isNaN(expAmount)) return;
@@ -164,7 +163,7 @@ function App() {
     setIcocaInput('');
   };
 
-  // 준비물 핸들러 함수들
+  // 준비물 체크 토글 및 관리 함수
   const toggleChecklist = (id) => {
     setChecklists(checklists.map(item => item.id === id ? { ...item, completed: !item.completed } : item));
   };
@@ -180,36 +179,38 @@ function App() {
     setChecklists(checklists.filter(item => item.id !== id));
   };
 
-  // 금액 계산 공식
+  // 금액 계산용 변수들
   const totalExpense = expenses.reduce((sum, item) => sum + item.amount, 0);
   const totalExpenseKRW = Math.round((totalExpense * exchangeRate) / 100);
 
-  // 구글 맵 새창 이동 오타 수정 완료
+  // 구글 지도 새창 검색용 안전 로직
   const handleMapSearch = (locationName) => {
     if (!locationName) return;
-    window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(locationName)}`, '_blank');
+    const searchUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(locationName)}`;
+    window.open(searchUrl, '_blank');
   };
 
-  // 현재 활성화된 날짜(Day 1 ~ Day 5)의 스케줄만 필터링
+  // 필터 및 진행률 데이터
   const filteredItineraries = itineraries.filter(item => item.day === activeDay);
   const completedCheckCount = checklists.filter(c => c.completed).length;
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#020617', color: '#f8fafc', paddingBottom: '110px', fontFamily: 'sans-serif', boxSizing: 'border-box' }}>
       
-      {/* 상단 타이틀 헤더 */}
+      {/* 상단 헤더 배너 */}
       <div style={{ background: 'linear-gradient(to right, #ea580c, #f59e0b)', padding: '24px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}>
         <p style={{ color: '#ffedd5', fontSize: '12px', fontWeight: 'bold', margin: '0 0 4px 0' }}>SAPPORO SUMMER FESTIVAL '26</p>
         <h1 style={{ fontSize: '24px', fontWeight: '900', margin: 0, color: '#ffffff' }}>삿포로 여름 축제 대시보드</h1>
       </div>
 
-      {/* 메인 콘텐츠 컨테이너 */}
+      {/* 모바일 뷰 전용 중앙 배치 래퍼 */}
       <div style={{ maxWidth: '448px', margin: '0 auto', padding: '16px', boxSizing: 'border-box' }}>
         
         {/* ==================== 1. 종합 대시보드 탭 ==================== */}
         {activeTab === 'dashboard' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             
+            {/* 상태 바 알림 */}
             <div style={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '16px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <h3 style={{ margin: '0 0 4px 0', fontSize: '17px', fontWeight: 'bold', color: '#fb923c' }}>🎉 스케줄 로드 완료!</h3>
@@ -221,7 +222,7 @@ function App() {
               </div>
             </div>
 
-            {/* 자산 카드 매트릭스 */}
+            {/* 자산 현황 요약 매트릭스 */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
               <div onClick={() => setActiveTab('expense')} style={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '16px', padding: '14px', cursor: 'pointer' }}>
                 <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 'bold' }}>💰 현재 가계부 지출</span>
@@ -235,7 +236,223 @@ function App() {
               </div>
             </div>
 
-            {/* 준비물 진행률 프로그레스 */}
+            {/* 준비물 달성 그래프 바 */}
             <div onClick={() => setActiveTab('checklist')} style={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '16px', padding: '16px', cursor: 'pointer' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <span style={{ fontSize: '13px
+                <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#34d399' }}>✅ 체크리스트 달성도</span>
+                <span style={{ fontSize: '13px', fontWeight: 'bold' }}>{completedCheckCount} / {checklists.length}</span>
+              </div>
+              <div style={{ width: '100%', height: '8px', backgroundColor: '#020617', borderRadius: '4px', overflow: 'hidden' }}>
+                <div style={{ width: `${checklists.length ? (completedCheckCount / checklists.length) * 100 : 0}%`, height: '100%', backgroundColor: '#10b981', transition: 'width 0.3s' }}></div>
+              </div>
+            </div>
+
+            {/* 하이라이트 동선 목록 */}
+            <div style={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '16px', padding: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                <h4 style={{ margin: 0, fontSize: '15px', fontWeight: 'bold', color: '#f8fafc' }}>🧭 주요 하이라이트 동선</h4>
+                <button onClick={() => setActiveTab('itinerary')} style={{ background: 'none', border: 'none', color: '#fb923c', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>전체 보기 ➡</button>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {itineraries.filter(i => [1, 3, 6, 9, 12, 15, 18].includes(i.id)).map((item) => (
+                  <div key={item.id} style={{ display: 'flex', gap: '12px', borderLeft: '2px solid #334155', paddingLeft: '12px', marginLeft: '6px' }}>
+                    <span style={{ fontSize: '11px', color: '#fb923c', fontWeight: 'bold', minWidth: '75px' }}>{item.day} {item.time}</span>
+                    <span style={{ fontSize: '13px', color: '#e2e8f0', fontWeight: '500' }}>{item.location}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+          </div>
+        )}
+
+        {/* ==================== 2. 일정 관리 탭 ==================== */}
+        {activeTab === 'itinerary' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            
+            {/* Day 1 ~ 5 선택 상단 서브 슬라이더 */}
+            <div style={{ display: 'flex', gap: '6px', backgroundColor: '#0f172a', padding: '6px', borderRadius: '12px', border: '1px solid #1e293b', overflowX: 'auto' }}>
+              {['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5'].map((day) => (
+                <button
+                  key={day}
+                  onClick={() => setActiveDay(day)}
+                  style={{
+                    flex: '1 0 auto',
+                    padding: '10px 16px',
+                    border: 'none',
+                    borderRadius: '8px',
+                    backgroundColor: activeDay === day ? '#f97316' : 'transparent',
+                    color: activeDay === day ? '#020617' : '#94a3b8',
+                    fontWeight: 'bold',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {day}
+                </button>
+              ))}
+            </div>
+
+            {/* 스케줄 추가 폼 */}
+            <form onSubmit={addItinerary} style={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '16px', padding: '16px' }}>
+              <h3 style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#fb923c' }}>➕ {activeDay} 일정 추가하기</h3>
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                <input type="time" value={newTime} onChange={(e) => setNewTime(e.target.value)} style={{ width: '80px', backgroundColor: '#020617', border: '1px solid #1e293b', borderRadius: '8px', padding: '8px', color: '#fff' }} />
+                <input type="text" placeholder="예: 스프카레 맛집 방문" value={newLocation} onChange={(e) => setNewLocation(e.target.value)} style={{ flex: 1, backgroundColor: '#020617', border: '1px solid #1e293b', borderRadius: '8px', padding: '8px', color: '#fff' }} />
+              </div>
+              <input type="text" placeholder="간단한 메모 (선택사항)" value={newMemo} onChange={(e) => setNewMemo(e.target.value)} style={{ width: '100%', backgroundColor: '#020617', border: '1px solid #1e293b', borderRadius: '8px', padding: '8px', color: '#fff', boxSizing: 'border-box', marginBottom: '10px' }} />
+              <button type="submit" style={{ width: '100%', backgroundColor: '#f97316', border: 'none', borderRadius: '8px', padding: '10px', color: '#020617', fontWeight: 'bold', cursor: 'pointer' }}>스케줄 등록</button>
+            </form>
+
+            {/* 타임라인 보드 영역 */}
+            <div style={{ borderLeft: '2px solid #334155', marginLeft: '12px', paddingLeft: '16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              {filteredItineraries.length === 0 ? (
+                <p style={{ color: '#64748b', fontSize: '14px', fontStyle: 'italic' }}>등록된 일정이 없습니다.</p>
+              ) : (
+                filteredItineraries.map((item) => (
+                  <div key={item.id} style={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '14px', padding: '14px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '11px', color: '#fb923c', backgroundColor: 'rgba(249,115,22,0.1)', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold' }}>{item.time}</span>
+                      <h4 style={{ margin: 0, flex: 1, fontSize: '15px', fontWeight: 'bold', color: '#f8fafc' }}>{item.location}</h4>
+                      <div style={{ display: 'flex', gap: '4px' }}>
+                        <button type="button" onClick={() => handleMapSearch(item.location)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '15px' }}>📍</button>
+                        <button type="button" onClick={() => deleteItinerary(item.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '15px' }}>🗑️</button>
+                      </div>
+                    </div>
+                    {item.memo && <p style={{ margin: '6px 0 0 0', fontSize: '13px', color: '#cbd5e1', lineHeight: '1.4' }}>{item.memo}</p>}
+                  </div>
+                ))
+              )}
+            </div>
+
+          </div>
+        )}
+
+        {/* ==================== 3. 가계부 탭 ==================== */}
+        {activeTab === 'expense' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            
+            {/* 교통카드 잔액 확인 및 충전단 */}
+            <div style={{ backgroundColor: '#0b1329', border: '1px solid #1d4ed8', borderRadius: '16px', padding: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <div>
+                  <span style={{ fontSize: '11px', color: '#3b82f6', fontWeight: 'bold', backgroundColor: 'rgba(59,130,246,0.1)', padding: '2px 6px', borderRadius: '4px' }}>IC CARD BALANCE</span>
+                  <h4 style={{ margin: '4px 0 0 0', fontSize: '16px', fontWeight: 'bold', color: '#eff6ff' }}>스이카/이코카 카드 잔액</h4>
+                </div>
+                <span style={{ fontSize: '20px', fontWeight: '900', color: '#60a5fa' }}>{icocaBalance.toLocaleString()} ¥</span>
+              </div>
+              <form onSubmit={handleChargeIcoca} style={{ display: 'flex', gap: '6px' }}>
+                <input 
+                  type="number" 
+                  placeholder="충전금액(엔화) 입력" 
+                  value={icocaInput}
+                  onChange={(e) => setIcocaInput(e.target.value)}
+                  style={{ flex: 1, backgroundColor: '#020617', border: '1px solid #1e4ed8', borderRadius: '6px', padding: '6px 10px', color: '#fff', fontSize: '13px' }}
+                />
+                <button type="submit" style={{ backgroundColor: '#2563eb', border: 'none', borderRadius: '6px', padding: '6px 12px', color: '#fff', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer' }}>충전</button>
+              </form>
+            </div>
+
+            {/* 총 예산 합계 */}
+            <div style={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '16px', padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <p style={{ margin: '0 0 4px 0', fontSize: '12px', color: '#94a3b8', fontWeight: 'bold' }}>총 지출 내역 합계</p>
+                <h2 style={{ margin: 0, fontSize: '24px', fontWeight: '900', color: '#fff' }}>
+                  {totalExpense.toLocaleString()} <span style={{ color: '#fbbf24', fontSize: '16px' }}>JPY</span>
+                </h2>
+                <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#a1a1aa' }}>
+                  약 {totalExpenseKRW.toLocaleString()} KRW (환율 반영)
+                </p>
+              </div>
+              <span style={{ fontSize: '24px', backgroundColor: 'rgba(251,191,36,0.1)', padding: '12px', borderRadius: '12px' }}>💰</span>
+            </div>
+
+            {/* 영수증 등록 입력 폼 */}
+            <form onSubmit={addExpense} style={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '16px', padding: '16px' }}>
+              <h3 style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#fbbf24' }}>➕ 지출 등록</h3>
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                <select value={expCategory} onChange={(e) => setExpCategory(e.target.value)} style={{ backgroundColor: '#020617', border: '1px solid #1e293b', borderRadius: '8px', padding: '8px', color: '#fff' }}>
+                  <option value="식비">식비</option>
+                  <option value="교통비">교통비</option>
+                  <option value="쇼핑">쇼핑</option>
+                  <option value="기타">기타</option>
+                </select>
+                <input type="number" placeholder="금액 (¥)" value={expAmount} onChange={(e) => setExpAmount(e.target.value)} style={{ flex: 1, backgroundColor: '#020617', border: '1px solid #1e293b', borderRadius: '8px', padding: '8px', color: '#fff' }} />
+              </div>
+              <input type="text" placeholder="항목 정보 기입" value={expMemo} onChange={(e) => setExpMemo(e.target.value)} style={{ width: '100%', backgroundColor: '#020617', border: '1px solid #1e293b', borderRadius: '8px', padding: '8px', color: '#fff', boxSizing: 'border-box', marginBottom: '10px' }} />
+              <button type="submit" style={{ width: '100%', backgroundColor: '#fbbf24', border: 'none', borderRadius: '8px', padding: '10px', color: '#020617', fontWeight: 'bold', cursor: 'pointer' }}>등록하기</button>
+            </form>
+
+            {/* 소비 내역 목록 */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {expenses.map((item) => {
+                const itemKRW = Math.round((item.amount * exchangeRate) / 100);
+                return (
+                  <div key={item.id} style={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px', padding: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <span style={{ fontSize: '11px', color: '#fbbf24', backgroundColor: 'rgba(251,191,36,0.1)', padding: '3px 6px', borderRadius: '4px', fontWeight: 'bold' }}>{item.category}</span>
+                      <div>
+                        <span style={{ fontSize: '14px', fontWeight: 'bold', display: 'block' }}>{item.memo || item.category}</span>
+                        <span style={{ fontSize: '11px', color: '#64748b' }}>≈ {itemKRW.toLocaleString()}원</span>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ fontWeight: 'bold', fontSize: '14px' }}>{item.amount.toLocaleString()} ¥</span>
+                      <button type="button" onClick={() => deleteExpense(item.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}>🗑️</button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+          </div>
+        )}
+
+        {/* ==================== 4. 체크리스트 준비물 탭 ==================== */}
+        {activeTab === 'checklist' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <form onSubmit={addChecklist} style={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '16px', padding: '16px', display: 'flex', gap: '8px' }}>
+              <input type="text" placeholder="예: 우산 혹은 우비 챙기기" value={newTodo} onChange={(e) => setNewTodo(e.target.value)} style={{ flex: 1, backgroundColor: '#020617', border: '1px solid #1e293b', borderRadius: '8px', padding: '8px', color: '#fff' }} />
+              <button type="submit" style={{ backgroundColor: '#10b981', border: 'none', borderRadius: '8px', padding: '8px 16px', color: '#020617', fontWeight: 'bold', cursor: 'pointer' }}>추가</button>
+            </form>
+
+            <div style={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '16px', padding: '6px' }}>
+              {checklists.map((item) => (
+                <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', borderBottom: '1px solid #1e293b' }}>
+                  <div onClick={() => toggleChecklist(item.id)} style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', flex: 1 }}>
+                    <span style={{ fontSize: '16px' }}>{item.completed ? '✅' : '⬜'}</span>
+                    <span style={{ textDecoration: item.completed ? 'line-through' : 'none', color: item.completed ? '#64748b' : '#f8fafc', fontSize: '14px' }}>{item.task}</span>
+                  </div>
+                  <button type="button" onClick={() => deleteChecklist(item.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}>🗑️</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+      </div>
+
+      {/* 하단 네비게이션 글로벌 고정 바 */}
+      <div style={{ position: 'fixed', bottom: '16px', left: '16px', right: '16px', maxWidth: '448px', margin: '0 auto', backgroundColor: 'rgba(15,23,42,0.95)', backdropFilter: 'blur(8px)', border: '1px solid #1e293b', borderRadius: '16px', padding: '8px 0', display: 'flex', justifyContent: 'space-around', zIndex: 100 }}>
+        <button type="button" onClick={() => setActiveTab('dashboard')} style={{ background: 'none', border: 'none', color: activeTab === 'dashboard' ? '#ea580c' : '#94a3b8', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+          <span style={{ fontSize: '18px' }}>🏠</span>
+          <span style={{ fontSize: '10px', fontWeight: activeTab === 'dashboard' ? 'bold' : 'normal' }}>대시보드</span>
+        </button>
+        <button type="button" onClick={() => setActiveTab('itinerary')} style={{ background: 'none', border: 'none', color: activeTab === 'itinerary' ? '#fb923c' : '#94a3b8', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+          <span style={{ fontSize: '18px' }}>🧭</span>
+          <span style={{ fontSize: '10px', fontWeight: activeTab === 'itinerary' ? 'bold' : 'normal' }}>일정 관리</span>
+        </button>
+        <button type="button" onClick={() => setActiveTab('expense')} style={{ background: 'none', border: 'none', color: activeTab === 'expense' ? '#fbbf24' : '#94a3b8', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+          <span style={{ fontSize: '18px' }}>💳</span>
+          <span style={{ fontSize: '10px', fontWeight: activeTab === 'expense' ? 'bold' : 'normal' }}>가계부</span>
+        </button>
+        <button type="button" onClick={() => setActiveTab('checklist')} style={{ background: 'none', border: 'none', color: activeTab === 'checklist' ? '#34d399' : '#94a3b8', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+          <span style={{ fontSize: '18px' }}>✅</span>
+          <span style={{ fontSize: '10px', fontWeight: activeTab === 'checklist' ? 'bold' : 'normal' }}>준비물</span>
+        </button>
+      </div>
+
+    </div>
+  );
+}
+
+export default App;
