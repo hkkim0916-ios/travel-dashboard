@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import './App.css'; // 화면 스타일링 파일
+// import './App.css'; ⬅️ 파일이 존재하지 않아 에러를 유발하던 라인을 완전히 제거했습니다.
 
 function App() {
   // 5일 차 마스터 풀 스케줄 데이터
@@ -33,185 +33,209 @@ function App() {
     { id: 18, day: 'Day 5', time: '12:15', location: '공항 국내선 청사 투어', memo: '🍜 라멘 도조에서 든든하게 점심 식사 후 비행기 타고 귀국 (~14:30)' }
   ];
 
-  // 탭 상태관리 (Day 1 ~ Day 5)
-  const [activeTab, setActiveTab] = useState('Day 2'); // 기본으로 Day 2를 보여줌
+  // 메인 메뉴 탭 설정 ('dashboard': 종합 대시보드, 'itinerary': 일정 관리, 'expense': 가계부, 'checklist': 준비물)
+  const [activeTab, setActiveTab] = useState('dashboard');
+  
+  // Day 1부터 Day 5까지 날짜별 서브 탭 상태 변수 (기본값 Day 1)
+  const [activeDay, setActiveDay] = useState('Day 1');
+  
+  // 실시간 환율 상태 (기본값 900원 설정)
+  const [exchangeRate, setExchangeRate] = useState(900);
+  const [rateLoading, setRateLoading] = useState(true);
 
-  // 입력 폼 상태관리
-  const [time, setTime] = useState('');
-  const [ampm, setAmpm] = useState('오후');
-  const [location, setLocation] = useState('');
-  const [memo, setMemo] = useState('');
+  // 이코카(ICOCA) 카드 충전 및 잔액 상태 관리 (초기 금액 2,000엔 기본 세팅)
+  const [icocaBalance, setIcocaBalance] = useState(() => {
+    const saved = localStorage.getItem('sapporo_icoca');
+    return saved ? parseInt(saved, 10) : 2000;
+  });
+  const [icocaInput, setIcocaInput] = useState('');
 
-  // 🌟 로컬 스토리지 데이터 로드 및 초기 빈 배열 검증 로직 추가
+  // 로컬 스토리지 연동 및 초기 데이터 바인딩
   const [itineraries, setItineraries] = useState(() => {
     const saved = localStorage.getItem('sapporo_itineraries');
     if (saved) {
       const parsed = JSON.parse(saved);
-      // 저장된 데이터가 존재하지만 일정이 하나도 비어 있다면 마스터 일정을 초기값으로 사용
       if (parsed.length > 0) return parsed;
     }
     return masterItineraries;
   });
 
-  // 하단 탭 네비게이션용 상태관리 (기본값: 일정 관리)
-  const [currentMenu, setCurrentMenu] = useState('일정 관리');
+  const [expenses, setExpenses] = useState(() => {
+    const saved = localStorage.getItem('sapporo_expenses');
+    return saved ? JSON.parse(saved) : [
+      { id: 1, category: '교통비', amount: 1300, memo: '공항 리무진 버스' },
+      { id: 2, category: '식비', amount: 3500, memo: '오도리 맥주축제 전야제' },
+      { id: 3, category: '교통비', amount: 200, memo: '모이와야마 트램' }
+    ];
+  });
 
-  // 데이터가 변경될 때마다 로컬 스토리지에 자동 저장
+  const [checklists, setChecklists] = useState(() => {
+    const saved = localStorage.getItem('sapporo_checklists');
+    return saved ? JSON.parse(saved) : [
+      { id: 1, task: '여권 소지 및 비짓재팬웹 QR 코드 확인', completed: true },
+      { id: 2, task: '이코카(ICOCA) 또는 스이카 카드 챙기기', completed: true },
+      { id: 3, task: '돼지코(110V 어댑터) 챙기기', completed: false },
+      { id: 4, task: '비에이 투어 집결 위치 및 시간 재확인', completed: false }
+    ];
+  });
+
+  // 입력 폼 상태 변수들
+  const [newLocation, setNewLocation] = useState('');
+  const [newTime, setNewTime] = useState('12:00');
+  const [newMemo, setNewMemo] = useState('');
+
+  const [expCategory, setExpCategory] = useState('식비');
+  const [expAmount, setExpAmount] = useState('');
+  const [expMemo, setExpMemo] = useState('');
+
+  const [newTodo, setNewTodo] = useState('');
+
+  // 오픈 환율 API 호출
+  useEffect(() => {
+    fetch('https://open.er-api.com/v6/latest/JPY')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && data.rates && data.rates.KRW) {
+          const rate100Yen = data.rates.KRW * 100;
+          setExchangeRate(parseFloat(rate100Yen.toFixed(2)));
+        }
+        setRateLoading(false)
+      })
+      .catch((err) => {
+        console.error('환율 로드 실패:', err);
+        setRateLoading(false);
+      });
+  }, []);
+
+  // 로컬스토리지 저장 동기화
   useEffect(() => {
     localStorage.setItem('sapporo_itineraries', JSON.stringify(itineraries));
   }, [itineraries]);
 
-  // 새로운 일정 등록 처리 함수
-  const handleSubmit = (e) => {
+  useEffect(() => {
+    localStorage.setItem('sapporo_expenses', JSON.stringify(expenses));
+  }, [expenses]);
+
+  useEffect(() => {
+    localStorage.setItem('sapporo_checklists', JSON.stringify(checklists));
+  }, [checklists]);
+
+  useEffect(() => {
+    localStorage.setItem('sapporo_icoca', icocaBalance.toString());
+  }, [icocaBalance]);
+
+  // 일정 핸들러 함수들
+  const addItinerary = (e) => {
     e.preventDefault();
-    if (!location.trim()) {
-      alert('일정 내용을 입력해주세요!');
-      return;
-    }
-
-    // 시간 포맷 정리 (예: 오후 02:30 -> 14:30)
-    let formattedTime = '시간 미정';
-    if (time) {
-      const [hours, minutes] = time.split(':');
-      let hourNum = parseInt(hours, 10);
-      if (ampm === '오후' && hourNum < 12) hourNum += 12;
-      if (ampm === '오전' && hourNum === 12) hourNum = 0;
-      formattedTime = `${String(hourNum).padStart(2, '0')}:${minutes}`;
-    }
-
-    const newSchedule = {
-      id: Date.now(),
-      day: activeTab,
-      time: formattedTime,
-      location,
-      memo
-    };
-
-    // 정렬을 위해 기존 일정에 추가 후 시간순으로 자동 정렬
-    const updated = [...itineraries, newSchedule].sort((a, b) => {
-      if (a.time === '시간 미정') return 1;
-      if (b.time === '시간 미정') return -1;
-      return a.time.localeCompare(b.time);
-    });
-
-    setItineraries(updated);
-
-    // 입력 폼 초기화
-    setTime('');
-    setLocation('');
-    setMemo('');
+    if (!newLocation.trim()) return;
+    const newItem = { id: Date.now(), day: activeDay, time: newTime, location: newLocation, memo: newMemo };
+    setItineraries([...itineraries, newItem].sort((a, b) => a.time.localeCompare(b.time)));
+    setNewLocation('');
+    setNewMemo('');
   };
 
-  // 일정 삭제 함수
-  const handleDelete = (id) => {
+  const deleteItinerary = (id) => {
     if (window.confirm('이 일정을 삭제하시겠습니까?')) {
-      setItineraries(itineraries.filter((item) => item.id !== id));
+      setItineraries(itineraries.filter(item => item.id !== id));
     }
   };
 
-  // 현재 선택된 Day의 일정만 필터링
-  const filteredItineraries = itineraries.filter((item) => item.day === activeTab);
+  // 가계부 핸들러 함수들
+  const addExpense = (e) => {
+    e.preventDefault();
+    if (!expAmount || isNaN(expAmount)) return;
+    const amountNum = parseInt(expAmount, 10);
+    setExpenses([...expenses, { id: Date.now(), category: expCategory, amount: amountNum, memo: expMemo }]);
+    if (expCategory === '교통비') {
+      setIcocaBalance(prev => Math.max(0, prev - amountNum));
+    }
+    setExpAmount('');
+    setExpMemo('');
+  };
+
+  const deleteExpense = (id) => {
+    setExpenses(expenses.filter(item => item.id !== id));
+  };
+
+  const handleChargeIcoca = (e) => {
+    e.preventDefault();
+    if (!icocaInput || isNaN(icocaInput)) return;
+    setIcocaBalance(prev => prev + parseInt(icocaInput, 10));
+    setIcocaInput('');
+  };
+
+  // 준비물 핸들러 함수들
+  const toggleChecklist = (id) => {
+    setChecklists(checklists.map(item => item.id === id ? { ...item, completed: !item.completed } : item));
+  };
+
+  const addChecklist = (e) => {
+    e.preventDefault();
+    if (!newTodo.trim()) return;
+    setChecklists([...checklists, { id: Date.now(), task: newTodo, completed: false }]);
+    setNewTodo('');
+  };
+
+  const deleteChecklist = (id) => {
+    setChecklists(checklists.filter(item => item.id !== id));
+  };
+
+  // 금액 계산 공식
+  const totalExpense = expenses.reduce((sum, item) => sum + item.amount, 0);
+  const totalExpenseKRW = Math.round((totalExpense * exchangeRate) / 100);
+
+  // 구글 맵 새창 이동 오타 수정 완료
+  const handleMapSearch = (locationName) => {
+    if (!locationName) return;
+    window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(locationName)}`, '_blank');
+  };
+
+  // 현재 활성화된 날짜(Day 1 ~ Day 5)의 스케줄만 필터링
+  const filteredItineraries = itineraries.filter(item => item.day === activeDay);
+  const completedCheckCount = checklists.filter(c => c.completed).length;
 
   return (
-    <div className="app-container">
-      {/* 상단 헤더 / Day 탭 */}
-      <div className="tab-header">
-        {['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5'].map((tab) => (
-          <button
-            key={tab}
-            className={`tab-btn ${activeTab === tab ? 'active' : ''}`}
-            onClick={() => setActiveTab(tab)}
-          >
-            {tab}
-          </button>
-        ))}
+    <div style={{ minHeight: '100vh', backgroundColor: '#020617', color: '#f8fafc', paddingBottom: '110px', fontFamily: 'sans-serif', boxSizing: 'border-box' }}>
+      
+      {/* 상단 타이틀 헤더 */}
+      <div style={{ background: 'linear-gradient(to right, #ea580c, #f59e0b)', padding: '24px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}>
+        <p style={{ color: '#ffedd5', fontSize: '12px', fontWeight: 'bold', margin: '0 0 4px 0' }}>SAPPORO SUMMER FESTIVAL '26</p>
+        <h1 style={{ fontSize: '24px', fontWeight: '900', margin: 0, color: '#ffffff' }}>삿포로 여름 축제 대시보드</h1>
       </div>
 
-      {/* 메인 콘텐츠 영역 */}
-      <div className="content-body">
-        {currentMenu === '일정 관리' ? (
-          <>
-            {/* 일정 추가 폼 컴포넌트 */}
-            <form className="schedule-form" onSubmit={handleSubmit}>
-              <h3 className="form-title">➕ {activeTab} 일정 추가하기</h3>
-              
-              <div className="form-row">
-                <select className="ampm-select" value={ampm} onChange={(e) => setAmpm(e.target.value)}>
-                  <option value="오전">오전</option>
-                  <option value="오후">오후</option>
-                </select>
-                <input
-                  type="time"
-                  className="time-input"
-                  value={time}
-                  onChange={(e) => setTime(e.target.value)}
-                />
-                <input
-                  type="text"
-                  className="location-input"
-                  placeholder="예: 스프카레 맛집 방문"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                />
+      {/* 메인 콘텐츠 컨테이너 */}
+      <div style={{ maxWidth: '448px', margin: '0 auto', padding: '16px', boxSizing: 'border-box' }}>
+        
+        {/* ==================== 1. 종합 대시보드 탭 ==================== */}
+        {activeTab === 'dashboard' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            
+            <div style={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '16px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h3 style={{ margin: '0 0 4px 0', fontSize: '17px', fontWeight: 'bold', color: '#fb923c' }}>🎉 스케줄 로드 완료!</h3>
+                <p style={{ margin: 0, fontSize: '13px', color: '#94a3b8' }}>삿포로 마스터 일정이 정상 반영되었습니다.</p>
               </div>
-
-              <input
-                type="text"
-                className="memo-input"
-                placeholder="간단한 메모 (선택사항)"
-                value={memo}
-                onChange={(e) => setMemo(e.target.value)}
-              />
-
-              <button type="submit" className="submit-btn">스케줄 등록</button>
-            </form>
-
-            {/* 일정 리스트 출력 영역 */}
-            <div className="timeline-container">
-              {filteredItineraries.length === 0 ? (
-                <p className="no-data">등록된 일정이 없습니다.</p>
-              ) : (
-                filteredItineraries.map((item) => (
-                  <div key={item.id} className="timeline-item">
-                    <div className="item-time">⏱️ {item.time}</div>
-                    <div className="item-content">
-                      <div className="item-location">{item.location}</div>
-                      {item.memo && <div className="item-memo">{item.memo}</div>}
-                    </div>
-                    <button className="delete-btn" onClick={() => handleDelete(item.id)}>❌</button>
-                  </div>
-                ))
-              )}
+              <div style={{ textAlign: 'right' }}>
+                <span style={{ fontSize: '11px', color: '#38bdf8', display: 'block', fontWeight: 'bold' }}>실시간 환율</span>
+                <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#f1f5f9' }}>{rateLoading ? '🔄 로딩중' : `¥100 = ${exchangeRate}원`}</span>
+              </div>
             </div>
-          </>
-        ) : (
-          <div className="placeholder-screen">
-            <h3>{currentMenu} 화면 준비 중</h3>
-            <p>현재 기능 개발 중입니다.</p>
-          </div>
-        )}
-      </div>
 
-      {/* 하단 푸터 네비게이션 바 */}
-      <div className="bottom-nav">
-        {[
-          { name: '대시보드', icon: '🏠' },
-          { name: '일정 관리', icon: '🧭' },
-          { name: '가계부', icon: '💳' },
-          { name: '준비물', icon: '✅' }
-        ].map((menu) => (
-          <button
-            key={menu.name}
-            className={`nav-item ${currentMenu === menu.name ? 'active' : ''}`}
-            onClick={() => setCurrentMenu(menu.name)}
-          >
-            <span className="nav-icon">{menu.icon}</span>
-            <span className="nav-text">{menu.name}</span>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
+            {/* 자산 카드 매트릭스 */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div onClick={() => setActiveTab('expense')} style={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '16px', padding: '14px', cursor: 'pointer' }}>
+                <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 'bold' }}>💰 현재 가계부 지출</span>
+                <h4 style={{ margin: '6px 0 2px 0', fontSize: '18px', fontWeight: 'bold', color: '#fbbf24' }}>{totalExpense.toLocaleString()} ¥</h4>
+                <span style={{ fontSize: '11px', color: '#64748b' }}>≈ {totalExpenseKRW.toLocaleString()}원</span>
+              </div>
+              <div onClick={() => setActiveTab('expense')} style={{ backgroundColor: '#0b1329', border: '1px solid #1d4ed8', borderRadius: '16px', padding: '14px', cursor: 'pointer' }}>
+                <span style={{ fontSize: '12px', color: '#60a5fa', fontWeight: 'bold' }}>💳 교통카드 잔액</span>
+                <h4 style={{ margin: '6px 0 2px 0', fontSize: '18px', fontWeight: 'bold', color: '#eff6ff' }}>{icocaBalance.toLocaleString()} ¥</h4>
+                <span style={{ fontSize: '11px', color: '#3b82f6' }}>스이카 / 이코카 연동</span>
+              </div>
+            </div>
 
-export default App;
+            {/* 준비물 진행률 프로그레스 */}
+            <div onClick={() => setActiveTab('checklist')} style={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '16px', padding: '16px', cursor: 'pointer' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <span style={{ fontSize: '13px
