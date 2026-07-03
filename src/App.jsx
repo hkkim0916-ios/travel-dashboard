@@ -38,7 +38,7 @@ function App() {
   // Day 서브 탭 상태 변수 (기본값 Day 1)
   const [activeDay, setActiveDay] = useState('Day 1');
   
-  // 실시간 환율 상태 (기본값 900원)
+  // 실시간 환율 상태
   const [exchangeRate, setExchangeRate] = useState(900);
   const [rateLoading, setRateLoading] = useState(true);
 
@@ -98,7 +98,7 @@ function App() {
           const rate100Yen = data.rates.KRW * 100;
           setExchangeRate(parseFloat(rate100Yen.toFixed(2)));
         }
-        setRateLoading(false);
+        setRateLoading(false)
       })
       .catch((err) => {
         console.error('환율 로드 실패:', err);
@@ -183,7 +183,7 @@ function App() {
   const totalExpense = expenses.reduce((sum, item) => sum + item.amount, 0);
   const totalExpenseKRW = Math.round((totalExpense * exchangeRate) / 100);
 
-  // 구글 지도 새창 검색용 안전 백틱 문법 수정 적용
+  // 구글 지도 새창 검색용 함수
   const handleMapSearch = (locationName) => {
     if (!locationName) return;
     const searchUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(locationName)}`;
@@ -203,7 +203,7 @@ function App() {
         <h1 style={{ fontSize: '24px', fontWeight: '900', margin: 0, color: '#ffffff' }}>삿포로 여름 축제 대시보드</h1>
       </div>
 
-      {/* 모바일 뷰 전용 중앙 배치 래퍼 */}
+      {/* 중앙 배치 래퍼 */}
       <div style={{ maxWidth: '448px', margin: '0 auto', padding: '16px', boxSizing: 'border-box' }}>
         
         {/* ==================== 1. 종합 대시보드 탭 ==================== */}
@@ -222,7 +222,7 @@ function App() {
               </div>
             </div>
 
-            {/* 자산 현황 요약 매트릭스 */}
+            {/* 자산 현황 요약 */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
               <div onClick={() => setActiveTab('expense')} style={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '16px', padding: '14px', cursor: 'pointer' }}>
                 <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 'bold' }}>💰 현재 가계부 지출</span>
@@ -251,7 +251,7 @@ function App() {
             <div style={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '16px', padding: '16px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
                 <h4 style={{ margin: 0, fontSize: '15px', fontWeight: 'bold', color: '#f8fafc' }}>🧭 주요 하이라이트 동선</h4>
-                <button onClick={() => setActiveTab('itinerary')} style={{ background: 'none', border: 'none', color: '#fb923c', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>전체 보기 ➡</button>
+                <button onClick={() => setActiveTab('itinerary')} style={{ background: 'none', border: 'none', color: '#fb923c', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>전체 보기 ➡️</button>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {itineraries.filter(i => [1, 3, 6, 9, 12, 15, 18].includes(i.id)).map((item) => (
@@ -275,6 +275,7 @@ function App() {
               {['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5'].map((day) => (
                 <button
                   key={day}
+                  type="button"
                   onClick={() => setActiveDay(day)}
                   style={{
                     flex: '1 0 auto',
@@ -366,7 +367,7 @@ function App() {
               <span style={{ fontSize: '24px', backgroundColor: 'rgba(251,191,36,0.1)', padding: '12px', borderRadius: '12px' }}>💰</span>
             </div>
 
-            {/* 영수증 등록 입력 폼 */}
+            {/* 지출 등록 폼 */}
             <form onSubmit={addExpense} style={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '16px', padding: '16px' }}>
               <h3 style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#fbbf24' }}>➕ 지출 등록</h3>
               <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
@@ -376,4 +377,7 @@ function App() {
                   <option value="쇼핑">쇼핑</option>
                   <option value="기타">기타</option>
                 </select>
-                <input type="number" placeholder="금액 (¥)" value={expAmount} onChange={(e) => setExpAmount(e.target.value)} style={{ flex: 1, backgroundColor: '#020617', border: '1px solid #1e293b', borderRadius: '8px', padding
+                <input type="number" placeholder="금액 (¥)" value={expAmount} onChange={(e) => setExpAmount(e.target.value)} style={{ flex: 1, backgroundColor: '#020617', border: '1px solid #1e293b', borderRadius: '8px', padding: '8px', color: '#fff' }} />
+              </div>
+              <input type="text" placeholder="항목 정보 기입" value={expMemo} onChange={(e) => setExpMemo(e.target.value)} style={{ width: '100%', backgroundColor: '#020617', border: '1px solid #1e293b', borderRadius: '8px', padding: '8px', color: '#fff', boxSizing: 'border-box', marginBottom: '10px' }} />
+              <button type="submit" style={{ width: '100%', backgroundColor: '#fbbf24', border: 'none', borderRadius: '8px', padding: '10px', color: '#020
